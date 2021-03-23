@@ -24,7 +24,8 @@ SECRET_KEY = 'w_mcdb@k%98q(02#4iq!t0imzk=9f17xho7&rizmka@4!a#7j%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
 
@@ -43,6 +44,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'rest_auth.registration',
     'core',
+	'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'ecommerce_api.urls'
