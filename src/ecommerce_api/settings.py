@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'rest_auth.registration',
     'core',
-	'corsheaders',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -83,8 +83,13 @@ WSGI_APPLICATION = 'ecommerce_api.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': 'ozu_store_db',
+        'CLIENT': {
+            'host': "mongodb+srv://db_user:LyqaLfS2n5qY3HDW@database.kil0l.mongodb.net/ozu_store_db?retryWrites=true&w=majority"
+        },
     }
 }
 
