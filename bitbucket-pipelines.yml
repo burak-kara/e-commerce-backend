@@ -12,25 +12,14 @@ pipelines:
   branches:
     deployment:
       - step:
-          name: Build and Test
+          name: Build and Push to DockerHub
           script:
             - IMAGE_NAME=$BITBUCKET_REPO_SLUG
             - docker build . --file Dockerfile --tag ${IMAGE_NAME}
-            - docker save ${IMAGE_NAME} --output "${IMAGE_NAME}.tar"
-          services:
-            - docker
-          caches:
-            - docker
-          artifacts:
-            - "*.tar"
-      - step:
-          name: Push to DockerHub
-          deployment: Production
-          script:
             - echo ${DOCKERHUB_PASSWORD} | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-            - IMAGE_NAME=$BITBUCKET_REPO_SLUG
-            - docker load --input "${IMAGE_NAME}.tar"
             - VERSION="0.1.${BITBUCKET_BUILD_NUMBER}"
             - docker push yilmazdoga/ozu-ecommerce:${VERSION}
           services:
+            - docker
+          caches:
             - docker
