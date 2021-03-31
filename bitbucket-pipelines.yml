@@ -15,9 +15,9 @@ pipelines:
           name: Build and Push to DockerHub
           script:
             - IMAGE_NAME=yilmazdoga/ozu-ecommerce
-            - docker build . --file Dockerfile --tag ${IMAGE_NAME}
-            - echo ${DOCKERHUB_PASSWORD} | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
             - VERSION="0.1.${BITBUCKET_BUILD_NUMBER}"
+            - docker build . --file Dockerfile --tag ${IMAGE_NAME}:${VERSION}
+            - echo ${DOCKERHUB_PASSWORD} | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
             - docker push ${IMAGE_NAME}:${VERSION}
           services:
             - docker
