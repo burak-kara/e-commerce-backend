@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  web:
+    image: yilmazdoga/ozu-ecommerce:latest
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
