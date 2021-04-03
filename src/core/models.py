@@ -71,15 +71,23 @@ class User(AbstractBaseUser):
 
 
 class Item(models.Model):
-    product_name = models.CharField(max_length=200, default='')
+    name = models.CharField(max_length=200, default='')
     brand = models.CharField(max_length=100, default='Other')
     category = models.CharField(max_length=100, default='Other')
     price = models.IntegerField(default=0)
-    stock_count = models.IntegerField(default=0)
-    image_link = models.CharField(max_length=1000, default='#')
+    stock = models.IntegerField(default=0)
+    image = models.CharField(max_length=1000, default='#')
     description = models.CharField(max_length=1000, blank=True, default='')
-    specifications = models.CharField(max_length=1000, blank=True, default='')
+    specs = models.CharField(max_length=1000, blank=True, default='')
+    campaign = models.CharField(max_length=200, blank=True, default='')
     seller = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=200, default='')
 
     def __str__(self):
         return self.name

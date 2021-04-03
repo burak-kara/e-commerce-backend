@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.http import Http404
 
-from .serializers import ItemSerializer
-from .models import Item, User
+from .serializers import ItemSerializer, CategorySerializer
+from .models import Item, User, Category
 
 
 class ItemList(APIView):
@@ -54,3 +54,21 @@ class ItemDetail(APIView):
         item = self.get_object(pk)
         item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CategoryList(APIView):
+    """
+    List all categories, or create a new category.
+    """
+
+    def get(self, request, format=None):
+        category = Category.objects.all()
+        serializer = CategorySerializer(category, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = CategorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
