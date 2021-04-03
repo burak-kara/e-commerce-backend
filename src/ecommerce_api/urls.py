@@ -1,12 +1,16 @@
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework.urlpatterns import format_suffix_patterns
 
-from core.views import ItemView
+from core.views import ItemList, ItemDetail
 
 urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('rest-auth/', include('rest_auth.urls')),
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path('', admin.site.urls),
-    path('api/items', ItemView.as_view(), name='item'),
+    path('api/items/', ItemList.as_view()),
+    path('api/items/<int:pk>/', ItemDetail.as_view()),
 ]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
