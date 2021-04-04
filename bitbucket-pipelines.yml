@@ -1,26 +1,23 @@
-# Template docker-push
-
-# This template allows you to build and push your docker image to a Docker Hub account.
-# The workflow allows running tests, code linting and security scans on feature branches (as well as master).
-# The docker image will be validated and pushed to the docker registry after the code is merged to master.
-
-# Prerequisites: $DOCKERHUB_USERNAME, $DOCKERHUB_PASSWORD setup as deployment variables
-
-image: atlassian/default-image:2
+image: python:3.8.9
 
 pipelines:
   branches:
     deployment:
-      - step:
-          name: Build and Push to DockerHub
-          script:
-            - IMAGE_NAME=yilmazdoga/ozu-ecommerce
-            - VERSION="0.1.${BITBUCKET_BUILD_NUMBER}"
-            - docker build . --file Dockerfile --tag ${IMAGE_NAME}:${VERSION}
-            - echo ${DOCKERHUB_PASSWORD} | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-            - docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
-            - docker push ${IMAGE_NAME}:latest
-          services:
-            - docker
-          caches:
-            - docker
+    - step:
+        name: Build
+        script:
+          - git archive --format=tar.gz deployment -o ecommerce_api.tar.gz
+        artifacts:
+          - ecommerce_api.tar.gz
+
+    - step:
+        name: Deploy to production
+        deployment: production
+        caches:
+          - pip
+        script:
+          - pipe: atlassian/heroku-deploy:1.2.1
+            variables:
+              HEROKU_API_KEY: $HEROKU_API_KEY
+              HEROKU_APP_NAME: $HEROKU_APP_NAME
+              ZIP_FILE: ecommerce_api.tar.gz

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
+import django_heroku
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,11 +23,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'w_mcdb@k%98q(02#4iq!t0imzk=9f17xho7&rizmka@4!a#7j%'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = True
-
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+    "https://e-commerce-ozu.web.app"
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -45,7 +48,6 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'core',
     'corsheaders',
-    'sslserver',
 ]
 
 MIDDLEWARE = [
@@ -145,3 +147,4 @@ REST_FRAMEWORK = {
 }
 
 SITE_ID = 1
+django_heroku.settings(locals())
