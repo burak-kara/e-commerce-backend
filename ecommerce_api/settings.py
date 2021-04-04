@@ -28,7 +28,7 @@ DEBUG = False
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
-    "https://e-commerce-ozu.web.app/"
+    "https://e-commerce-ozu.web.app"
 ]
 # Application definition
 
@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'rest_auth.registration',
-	'core',
+    'core',
     'corsheaders',
 ]
 
