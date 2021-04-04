@@ -5,7 +5,7 @@ pipelines:
     - step:
         script:
           - mkdir artifact
-          - cp -r . ./artifact
+          - cp -r . artifact
         artifacts:
           - artifact/*
     - step:
