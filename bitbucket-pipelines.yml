@@ -6,6 +6,8 @@ pipelines:
     - step:
         name: Build
         script:
+          - cp -a ./src/. .
+          - rm -r src
           - git archive --format=tar.gz deployment -o ecommerce_api.tar.gz
         artifacts:
           - ecommerce_api.tar.gz
