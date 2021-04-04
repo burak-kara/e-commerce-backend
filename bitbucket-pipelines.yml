@@ -1,23 +1,22 @@
-image: python:3.8.9
+image: atlassian/default-image:2
 
 pipelines:
-  branches:
-    deployment:
+  default:
     - step:
-        name: Build
         script:
-          - git archive --format=tar.gz deployment -o ecommerce_api.tar.gz
+          - mkdir artifact
+          - cp -r . ./artifact
         artifacts:
-          - ecommerce_api.tar.gz
-
+          - artifact/*
     - step:
-        name: Deploy to production
         deployment: production
-        caches:
-          - pip
         script:
-          - pipe: atlassian/heroku-deploy:1.2.1
+          - pipe: atlassian/aws-s3-deploy:0.3.7
             variables:
-              HEROKU_API_KEY: $HEROKU_API_KEY
-              HEROKU_APP_NAME: $HEROKU_APP_NAME
-              ZIP_FILE: ecommerce_api.tar.gz
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+              AWS_DEFAULT_REGION: 'eu-north-1'
+              S3_BUCKET: 'ozu-store-s3'
+              EXPIRES: '2021-12-12'
+              LOCAL_PATH: 'artifact'
+              ACL: 'public-read'
