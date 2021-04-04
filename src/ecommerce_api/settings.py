@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'core',
     'corsheaders',
+    'sslserver',
 ]
 
 MIDDLEWARE = [
