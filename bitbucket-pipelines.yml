@@ -10,7 +10,7 @@ pipelines:
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
               AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
               AWS_DEFAULT_REGION: 'eu-north-1'
-              S3_BUCKET: 'ozu-store-s3'
+              S3_BUCKET: 'ozu-store-3s'
               EXPIRES: '2021-12-12'
               LOCAL_PATH: './'
               ACL: 'public-read'
