@@ -8,6 +8,16 @@ pipelines:
         script:
           - cp -a ./src/. .
           - ls
+          - cd core
+          - ls
+          - cd ..
+          - ls
+          - cd ecommerce_api
+          - ls
+          - cd ..
+          - cd src
+          - ls
+          - cd ..
           - git archive --format=tar.gz deployment -o ecommer_api.tar.gz
         artifacts:
           - ecommer_api.tar.gz
