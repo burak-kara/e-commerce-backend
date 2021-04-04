@@ -18,6 +18,8 @@ pipelines:
           - cd src
           - ls
           - cd ..
+          - rm -r src
+          - ls
           - git archive --format=tar.gz deployment -o ecommer_api.tar.gz
         artifacts:
           - ecommer_api.tar.gz
