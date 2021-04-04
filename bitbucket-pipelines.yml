@@ -7,6 +7,7 @@ pipelines:
         name: Build
         script:
           - cp -a ./src/. .
+          - ls
           - git archive --format=tar.gz deployment -o ecommer_api.tar.gz
         artifacts:
           - ecommer_api.tar.gz
