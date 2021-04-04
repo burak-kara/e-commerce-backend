@@ -6,8 +6,7 @@ pipelines:
     - step:
         name: Build
         script:
-          - cp -a ./src/. .
-          - git archive --format=tar.gz deployment -o ecommer_api.tar.gz
+          - git archive --format=tar.gz deployment-try -o ecommer_api.tar.gz
         artifacts:
           - ecommer_api.tar.gz
 
