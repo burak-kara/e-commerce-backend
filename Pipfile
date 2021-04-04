@@ -1,0 +1,40 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+asgiref = "*"
+certifi = "*"
+cffi = "*"
+chardet = "*"
+cryptography = "*"
+defusedxml = "*"
+Django = "*"
+django-allauth = "*"
+django-cors-headers = "*"
+django-heroku = "*"
+django-rest-auth = "*"
+djangorestframework = "*"
+djongo = "*"
+dnspython = "*"
+gunicorn = "*"
+idna = "*"
+oauthlib = "*"
+psycopg2 = "*"
+pycparser = "*"
+PyJWT = "*"
+pymongo = "*"
+python3-openid = "*"
+pytz = "*"
+requests = "*"
+requests-oauthlib = "*"
+six = "*"
+sqlparse = "*"
+urllib3 = "*"
+whitenoise = "*"
+
+[requires]
+python_version = "3.8.9"
