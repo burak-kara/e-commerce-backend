@@ -6,9 +6,9 @@ pipelines:
     - step:
         name: Build
         script:
-          - git archive --format=tar.gz deployment -o ecommer_api.tar.gz
+          - git archive --format=tar.gz deployment -o ecommerce_api.tar.gz
         artifacts:
-          - ecommer_api.tar.gz
+          - ecommerce_api.tar.gz
 
     - step:
         name: Deploy to production
@@ -20,4 +20,4 @@ pipelines:
             variables:
               HEROKU_API_KEY: $HEROKU_API_KEY
               HEROKU_APP_NAME: $HEROKU_APP_NAME
-              ZIP_FILE: ecommer_api.tar.gz
+              ZIP_FILE: ecommerce_api.tar.gz
