@@ -3,12 +3,6 @@ image: atlassian/default-image:2
 pipelines:
   default:
     - step:
-        script:
-          - mkdir artifact
-          - mv ./* artifact
-        artifacts:
-          - artifact/*
-    - step:
         deployment: production
         script:
           - pipe: atlassian/aws-s3-deploy:0.3.7
@@ -18,5 +12,5 @@ pipelines:
               AWS_DEFAULT_REGION: 'eu-north-1'
               S3_BUCKET: 'ozu-store-s3'
               EXPIRES: '2021-12-12'
-              LOCAL_PATH: 'artifact'
+              LOCAL_PATH: './'
               ACL: 'public-read'
