@@ -6,20 +6,18 @@ pipelines:
     - step:
         name: Build
         script:
-          - cp -a ./src/. .
-          - ls
-          - cd core
-          - ls
-          - cd ..
-          - ls
-          - cd ecommerce_api
-          - ls
-          - cd ..
-          - cd src
-          - ls
-          - cd ..
-          - rm -r src
-          - ls
-          - git archive --format=tar.gz deployment -o ecommer_api.tar.gz
+          - git archive --format=tar.gz deployment -o ecommerce_api.tar.gz
         artifacts:
-          - ecommer_api.tar.gz
+          - ecommerce_api.tar.gz
+
+    - step:
+        name: Deploy to production
+        deployment: production
+        caches:
+          - pip
+        script:
+          - pipe: atlassian/heroku-deploy:1.2.1
+            variables:
+              HEROKU_API_KEY: $HEROKU_API_KEY
+              HEROKU_APP_NAME: $HEROKU_APP_NAME
+              ZIP_FILE: ecommerce_api.tar.gz
