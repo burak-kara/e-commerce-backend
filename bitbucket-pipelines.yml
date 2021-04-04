@@ -2,7 +2,7 @@ image: python:3.8.9
 
 pipelines:
   branches:
-    deployment-try:
+    deployment:
     - step:
         name: Build
         script:
