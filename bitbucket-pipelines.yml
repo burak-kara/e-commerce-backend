@@ -29,4 +29,4 @@ pipelines:
                 VERSION_LABEL: 'ozu-store-api-source-1'
                 ENVIRONMENT_NAME: 'Ozustoreapi-env'
                 ZIP_FILE: 'Dockerrun.aws.json'
-                WAIT: 'true'
+                WAIT: 'false'
