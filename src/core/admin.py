@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core.models import Item, User, Category
+from .models import Item, User, Category
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
