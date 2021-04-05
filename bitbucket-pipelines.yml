@@ -19,7 +19,6 @@ pipelines:
       - step:
           name: Deploy to AWS EB
           script:
-            - zip application.zip Dockerrun.aws.json
             - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
               variables:
                 AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
@@ -27,7 +26,7 @@ pipelines:
                 AWS_DEFAULT_REGION: 'eu-north-1'
                 APPLICATION_NAME: 'ozu-store-api'
                 COMMAND: 'deploy-only'
-                VERSION_LABEL: 'deploy-$BITBUCKET_BUILD_NUMBER-multiple'
+                VERSION_LABEL: 'ozu-store-api-source-1'
                 ENVIRONMENT_NAME: 'Ozustoreapi-env'
-                ZIP_FILE: 'application.zip'
+                ZIP_FILE: 'Dockerrun.aws.json'
                 WAIT: 'true'
