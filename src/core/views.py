@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.http import Http404
 
-from core.serializers import ItemSerializer, CategorySerializer
-from core.models import Item, User, Category
+from .serializers import ItemSerializer, CategorySerializer
+from .models import Item, User, Category
 
 
 class ItemList(APIView):

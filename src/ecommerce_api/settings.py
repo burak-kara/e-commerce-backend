@@ -25,10 +25,8 @@ SECRET_KEY = 'w_mcdb@k%98q(02#4iq!t0imzk=9f17xho7&rizmka@4!a#7j%'
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_WHITELIST = [
-    "http://localhost:8000",
-    "https://e-commerce-ozu.web.app"
-]
+CORS_ORIGIN_ALLOW_ALL = True
+
 # Application definition
 
 INSTALLED_APPS = [

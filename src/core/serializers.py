@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import Item, User, Category
+from .models import Item, User, Category
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
