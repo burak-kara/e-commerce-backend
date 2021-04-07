@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/categories/', CategoryList.as_view()),
     path('api/items/', ItemList.as_view()),
     path('api/items/<int:pk>/', ItemDetail.as_view()),
+    path('api/items/<category>/', ItemDetail.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

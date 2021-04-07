@@ -37,9 +37,21 @@ class ItemDetail(APIView):
         except Item.DoesNotExist:
             raise Http404
 
+    @staticmethod
+    def get_object_by_category(category):
+        try:
+            return Item.objects.filter(category=category)
+        except Item.DoesNotExist:
+            raise Http404
+
     def get(self, request, pk, format=None):
         item = self.get_object(pk)
         serializer = ItemSerializer(item)
+        return Response(serializer.data)
+
+    def get(self, request, category, format=None):
+        item = self.get_object_by_category(category)
+        serializer = ItemSerializer(item, many=True)
         return Response(serializer.data)
 
     def put(self, request, pk, format=None):
