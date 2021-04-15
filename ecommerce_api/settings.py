@@ -137,7 +137,8 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 AUTH_USER_MODEL = 'core.User'
 
 REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'core.serializers.UserRegistrationSerializer'
+    'REGISTER_SERIALIZER': 'core.serializers.UserRegistrationSerializer',
+    'USER_DETAILS_SERIALIZER': 'core.serializers.UserSerializer',
 }
 
 REST_FRAMEWORK = {
