@@ -2,7 +2,7 @@ image: atlassian/default-image:2
 
 pipelines:
   branches:
-    deployment-aws-burak:
+    deployment:
       - step:
           name: Build and Push to DockerHub
           script:
