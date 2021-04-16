@@ -3,8 +3,23 @@ from rest_framework.views import APIView
 from rest_framework import status
 from django.http import Http404
 
-from .serializers import ItemSerializer, CategorySerializer
+from .serializers import ItemSerializer, CategorySerializer, UserSerializer
 from .models import Item, User, Category
+
+
+# TODO token check
+class UserDetail(APIView):
+	@staticmethod
+	def get_user(pk):
+		try:
+			return User.objects.get(pk=pk)
+		except User.DoesNotExist:
+			raise Http404
+
+	def get(self, request, pk, format=None):
+		user = self.get_user(pk)
+		serializer = UserSerializer(user)
+		return Response(serializer.data)
 
 
 class ItemList(APIView):
@@ -58,7 +73,7 @@ class ItemDetail(APIView):
 
 class ItemsByCategory(APIView):
 	"""
-	Retrieve, update or delete an item instance.
+	Retrieve an item instance.
 	"""
 
 	@staticmethod
