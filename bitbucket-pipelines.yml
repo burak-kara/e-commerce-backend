@@ -19,14 +19,12 @@ pipelines:
       - step:
           name: Deploy to AWS EB
           script:
-            - pipe: atlassian/aws-elasticbeanstalk-deploy:0.2.3
+            - pipe: atlassian/google-app-engine-deploy:0.7.4
               variables:
-                AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-                AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-                AWS_DEFAULT_REGION: 'eu-north-1'
-                APPLICATION_NAME: 'ozu-store-api'
-                COMMAND: 'deploy-only'
-                VERSION_LABEL: 'ozu-store-api-source-1'
-                ENVIRONMENT_NAME: 'Ozustoreapi-env'
-                ZIP_FILE: 'Dockerrun.aws.json'
-                WAIT: 'false'
+                KEY_FILE: $KEY_FILE
+                PROJECT: 'e-commerce-310016'
+                DEPLOYABLES: 'app.yaml'
+                VERSION: '${BITBUCKET_BUILD_NUMBER}'
+                PROMOTE: 'true'
+                STOP_PREVIOUS_VERSION: 'true'
+                EXTRA_ARGS: '--verbosity=debug --quiet'
