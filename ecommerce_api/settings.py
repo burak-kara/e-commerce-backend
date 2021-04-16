@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'rest_auth.registration',
-    'core',
+	'core',
     'corsheaders',
 ]
 
@@ -130,14 +130,15 @@ USE_TZ = True
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, '../static')
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 AUTH_USER_MODEL = 'core.User'
 
 REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'core.serializers.UserRegistrationSerializer'
+    'REGISTER_SERIALIZER': 'core.serializers.UserRegistrationSerializer',
+    'USER_DETAILS_SERIALIZER': 'core.serializers.UserSerializer',
 }
 
 REST_FRAMEWORK = {
