@@ -2,7 +2,7 @@ image: atlassian/default-image:2
 
 pipelines:
   branches:
-    deployment-aws:
+    deployment-aws-burak:
       - step:
           name: Build and Push to DockerHub
           script:
@@ -17,7 +17,7 @@ pipelines:
           caches:
             - docker
       - step:
-          name: Deploy to AWS EB
+          name: Deploy to Google Cloud
           script:
             - pipe: atlassian/google-app-engine-deploy:0.7.4
               variables:
