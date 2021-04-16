@@ -1,23 +1,30 @@
-image: python:3.8.9
+image: atlassian/default-image:2
 
 pipelines:
   branches:
-    deployment:
-    - step:
-        name: Build
-        script:
-          - git archive --format=tar.gz deployment -o ecommerce_api.tar.gz
-        artifacts:
-          - ecommerce_api.tar.gz
-
-    - step:
-        name: Deploy to production
-        deployment: production
-        caches:
-          - pip
-        script:
-          - pipe: atlassian/heroku-deploy:1.2.1
-            variables:
-              HEROKU_API_KEY: $HEROKU_API_KEY
-              HEROKU_APP_NAME: $HEROKU_APP_NAME
-              ZIP_FILE: ecommerce_api.tar.gz
+    deployment-aws-burak:
+      - step:
+          name: Build and Push to DockerHub
+          script:
+            - IMAGE_NAME=yilmazdoga/ozu-ecommerce
+            - VERSION="0.1.${BITBUCKET_BUILD_NUMBER}"
+            - docker build . --file Dockerfile --tag ${IMAGE_NAME}:${VERSION}
+            - echo ${DOCKERHUB_PASSWORD} | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+            - docker tag ${IMAGE_NAME}:${VERSION} ${IMAGE_NAME}:latest
+            - docker push ${IMAGE_NAME}:latest
+          services:
+            - docker
+          caches:
+            - docker
+      - step:
+          name: Deploy to Google Cloud
+          script:
+            - pipe: atlassian/google-app-engine-deploy:0.7.4
+              variables:
+                KEY_FILE: $KEY_FILE
+                PROJECT: 'e-commerce-310016'
+                DEPLOYABLES: 'app.yaml'
+                VERSION: $BITBUCKET_BUILD_NUMBER
+                PROMOTE: 'true'
+                STOP_PREVIOUS_VERSION: 'true'
+                EXTRA_ARGS: '--verbosity=debug --quiet'

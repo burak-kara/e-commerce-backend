@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import Item, User, Category
+from .models import Item, User, Category
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -34,6 +34,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'phone_number', 'first_name', 'last_name', 'is_sales_manager',
+                  'is_product_manager']
 
 
 class ItemSerializer(serializers.ModelSerializer):
