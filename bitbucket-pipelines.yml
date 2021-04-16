@@ -24,7 +24,7 @@ pipelines:
                 KEY_FILE: $KEY_FILE
                 PROJECT: 'e-commerce-310016'
                 DEPLOYABLES: 'app.yaml'
-                VERSION: '${BITBUCKET_BUILD_NUMBER}'
+                VERSION: ${BITBUCKET_BUILD_NUMBER}
                 PROMOTE: 'true'
                 STOP_PREVIOUS_VERSION: 'true'
                 EXTRA_ARGS: '--verbosity=debug --quiet'
