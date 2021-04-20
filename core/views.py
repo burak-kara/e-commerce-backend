@@ -178,6 +178,6 @@ class OrderDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk, format=None):
-        item = self.get_order(pk)
-        item.delete()
+        order = self.get_order(pk)
+        order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
