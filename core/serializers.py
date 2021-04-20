@@ -68,6 +68,7 @@ class OrderSerializer(serializers.ModelSerializer):
                   'item_counts',
                   'total_price',
                   'date',
+                  'delivery_address',
                   'status']
 
 

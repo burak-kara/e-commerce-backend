@@ -100,6 +100,7 @@ class Order(models.Model):
     item_counts = models.CharField(max_length=600, validators=[validators.int_list_validator()])
     total_price = models.IntegerField(default=0)
     date = models.DateField(verbose_name='order_date', auto_now_add=True)
+    delivery_address = models.CharField(max_length=1000, default='Self Pick Up')
 
     WAITING_FOR_PAYMENT = 0
     PAYMENT_CONFIRMED = 1

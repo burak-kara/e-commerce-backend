@@ -132,7 +132,7 @@ class OrderList(APIView):
 
         serializer = OrderSerializer(
             data={'buyer': buyer, 'items': items, 'item_counts': self.to_comma_sep_values(item_counts),
-                  'total_price': total_price})
+                  'total_price': total_price, 'delivery_address': request.data['delivery_address']})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -143,17 +143,6 @@ class OrderDetail(APIView):
     """
     Retrieve, update or delete an order instance.
     """
-
-    @staticmethod
-    def calculate_total_price(items, item_counts):
-        try:
-            total_price = 0
-            for i, pk in enumerate(items):
-                item = Item.objects.get(pk=pk)
-                total_price += int(item.price) * item_counts[i]
-            return total_price
-        except Item.DoesNotExist:
-            raise Http404
 
     @staticmethod
     def to_comma_sep_values(item_counts):
@@ -173,17 +162,24 @@ class OrderDetail(APIView):
 
     def put(self, request, pk, format=None):
         order = self.get_order(pk)
+        buyer = order.buyer.pk
+        items = [i.pk for i in order.items.all()]
+        item_counts = order.item_counts
+        total_price = order.total_price
 
-        buyer = request.data['buyer']
-        items = [int(i) for i in request.data['items']]
-        item_counts = [int(i) for i in request.data['items']]
-        total_price = self.calculate_total_price(items, item_counts)
-        status_ = request.data['status']
+        if 'delivery_address' in request.data.keys():
+            delivery_address = request.data['delivery_address']
+        else:
+            delivery_address = order.delivery_address
 
-        serializer = OrderSerializer(order,
-                                     data={'buyer': buyer, 'items': items,
-                                           'item_counts': self.to_comma_sep_values(item_counts),
-                                           'total_price': total_price, 'status': status_})
+        if 'status' in request.data.keys():
+            status_ = request.data['status']
+        else:
+            status_ = order.status
+
+        serializer = OrderSerializer(order, data={'buyer': buyer, 'items': items, 'item_counts': item_counts,
+                                                  'total_price': total_price, 'delivery_address': delivery_address,
+                                                  'status': status_})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
