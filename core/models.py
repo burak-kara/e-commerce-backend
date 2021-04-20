@@ -99,8 +99,25 @@ class Order(models.Model):
     items = models.ManyToManyField(Item)
     item_counts = models.CharField(max_length=600, validators=[validators.int_list_validator()])
     total_price = models.IntegerField(default=0)
-    is_accepted = models.BooleanField(default=False)
     date = models.DateField(verbose_name='order_date', auto_now_add=True)
+
+    WAITING_FOR_PAYMENT = 0
+    PAYMENT_CONFIRMED = 1
+    APPROVED = 2
+    PREPARING = 3
+    SHIPPED = 4
+    DELIVERED = 5
+    REJECTED = 6
+    STATUS_CHOICES = (
+        (WAITING_FOR_PAYMENT, 'Waiting For Payment'),
+        (PAYMENT_CONFIRMED, 'Payment Confirmed'),
+        (APPROVED, 'Approved'),
+        (PREPARING, 'Preparing'),
+        (SHIPPED, 'Shipped'),
+        (DELIVERED, 'Delivered'),
+        (REJECTED, 'Rejected')
+    )
+    status = models.IntegerField(choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
 
     def __str__(self):
         return str(self.buyer) + str(self.items)

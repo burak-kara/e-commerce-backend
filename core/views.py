@@ -110,11 +110,6 @@ class OrderList(APIView):
             total_price = 0
             for i, pk in enumerate(items):
                 item = Item.objects.get(pk=pk)
-                print("------------")
-                print(int(item.price))
-                print(item_counts[i])
-                print(int(item.price) * item_counts[i])
-                print("------------")
                 total_price += int(item.price) * item_counts[i]
             return total_price
         except Item.DoesNotExist:
@@ -137,7 +132,7 @@ class OrderList(APIView):
 
         serializer = OrderSerializer(
             data={'buyer': buyer, 'items': items, 'item_counts': self.to_comma_sep_values(item_counts),
-                  'total_price': total_price, 'is_accepted': request.data['is_accepted']})
+                  'total_price': total_price})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -148,6 +143,21 @@ class OrderDetail(APIView):
     """
     Retrieve, update or delete an order instance.
     """
+
+    @staticmethod
+    def calculate_total_price(items, item_counts):
+        try:
+            total_price = 0
+            for i, pk in enumerate(items):
+                item = Item.objects.get(pk=pk)
+                total_price += int(item.price) * item_counts[i]
+            return total_price
+        except Item.DoesNotExist:
+            raise Http404
+
+    @staticmethod
+    def to_comma_sep_values(item_counts):
+        return ",".join([str(i) for i in item_counts])
 
     @staticmethod
     def get_order(pk):
@@ -164,14 +174,16 @@ class OrderDetail(APIView):
     def put(self, request, pk, format=None):
         order = self.get_order(pk)
 
-        items = [int(i) for i in request.data['items'].keys()]
-        item_counts = [int(i) for i in request.data['items'].values()]
+        buyer = request.data['buyer']
+        items = [int(i) for i in request.data['items']]
+        item_counts = [int(i) for i in request.data['items']]
         total_price = self.calculate_total_price(items, item_counts)
+        status_ = request.data['status']
 
-        serializer = OrderSerializer(order, data={'items': items,
-                                                  'item_counts': self.to_comma_sep_values(item_counts),
-                                                  'total_price': total_price,
-                                                  'is_accepted': request.data['is_accepted']})
+        serializer = OrderSerializer(order,
+                                     data={'buyer': buyer, 'items': items,
+                                           'item_counts': self.to_comma_sep_values(item_counts),
+                                           'total_price': total_price, 'status': status_})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
