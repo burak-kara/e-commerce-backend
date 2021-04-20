@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/items/', views.ItemList.as_view()),
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),
     path('api/items/<category>/', views.ItemsByCategory.as_view()),
-    path('api/user/<int:pk>/', views.UserDetail.as_view()),
+    path('api/user/', views.UserDetail.as_view()),
     path('api/orders/', views.OrderList.as_view()),
     path('api/orders/<int:pk>/', views.OrderDetail.as_view()),
 ]

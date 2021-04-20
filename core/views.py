@@ -8,18 +8,9 @@ from .serializers import ItemSerializer, CategorySerializer, UserSerializer, Ord
 from .models import Item, User, Category, Order
 
 
-# TODO token check
 class UserDetail(APIView):
-    @staticmethod
-    def get_user(pk):
-        try:
-            return User.objects.get(pk=pk)
-        except User.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk, format=None):
-        user = self.get_user(pk)
-        serializer = UserSerializer(user)
+    def get(self, request, format=None):
+        serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
 
