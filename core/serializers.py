@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item, User, Category
+from .models import Item, User, Category, Order
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -57,6 +57,18 @@ class ItemSerializer(serializers.ModelSerializer):
                   'specs',
                   'campaign',
                   'seller']
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['id',
+                  'buyer',
+                  'items',
+                  'item_counts',
+                  'total_price',
+                  'is_accepted',
+                  'date']
 
 
 class CategorySerializer(serializers.ModelSerializer):

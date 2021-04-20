@@ -1,4 +1,5 @@
 from django.db import models
+from django.core import validators
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 
 
@@ -91,3 +92,15 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Order(models.Model):
+    buyer = models.ForeignKey(User, on_delete=models.CASCADE)
+    items = models.ManyToManyField(Item)
+    item_counts = models.CharField(max_length=600, validators=[validators.int_list_validator()])
+    total_price = models.IntegerField(default=0)
+    is_accepted = models.BooleanField(default=False)
+    date = models.DateField(verbose_name='order_date', auto_now_add=True)
+
+    def __str__(self):
+        return str(self.buyer) + str(self.items)
