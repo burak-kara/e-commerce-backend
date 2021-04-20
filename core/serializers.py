@@ -67,8 +67,8 @@ class OrderSerializer(serializers.ModelSerializer):
                   'items',
                   'item_counts',
                   'total_price',
-                  'is_accepted',
-                  'date']
+                  'date',
+                  'status']
 
 
 class CategorySerializer(serializers.ModelSerializer):
