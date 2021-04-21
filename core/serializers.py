@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from .models import Item, User, Category, Order
+from .models import Item, User, Category, Order, Review
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password_validation = serializers.CharField(style={'input_type': 'password'}, write_only=True)
+    password_validation = serializers.CharField(
+        style={'input_type': 'password'}, write_only=True)
 
     class Meta:
         model = User
@@ -30,7 +31,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         password_validation = self.validated_data['password_validation']
 
         if password != password_validation:
-            raise serializers.ValidationError({'password': 'Passwords must match.'})
+            raise serializers.ValidationError(
+                {'password': 'Passwords must match.'})
         user.set_password(password)
         user.save()
         return user
@@ -76,3 +78,16 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['name']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id',
+                  'date',
+                  'comment',
+                  'rating',
+                  'title',
+                  'user',
+                  'item',
+                  'is_approved']

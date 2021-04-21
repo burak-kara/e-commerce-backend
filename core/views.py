@@ -2,10 +2,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.http import Http404
+import copy
 
 from rest_framework.authentication import TokenAuthentication
-from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer
-from .models import Item, User, Category, Order
+from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
+from .models import Item, User, Category, Order, Review
 
 
 class UserDetail(APIView):
@@ -188,4 +189,77 @@ class OrderDetail(APIView):
     def delete(self, request, pk, format=None):
         order = self.get_order(pk)
         order.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# Review Implementation..
+
+
+class ReviewList(APIView):
+    """
+    List all reviews, or post a new review.
+    """
+
+    def get(self, request, format=None):
+        review = Review.objects.all()
+        serializer = ReviewSerializer(review, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = ReviewSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ReviewsOfItem(APIView):
+    """
+    Retrieve all reviews of an item.
+    """
+
+    @staticmethod
+    def get_object_by_item(item):
+        try:
+            return Review.objects.filter(item=item)
+        except Review.DoesNotExist:
+            raise Http404
+
+    def get(self, request, item, format=None):
+        review = self.get_object_by_item(item)
+        serializer = ReviewSerializer(review, many=True)
+        return Response(serializer.data)
+
+
+class ReviewDetail(APIView):
+    """
+    Retrieve, update or delete an item instance.
+    """
+
+    @staticmethod
+    def get_object(pk):
+        try:
+            return Review.objects.get(pk=pk)
+        except Item.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        review = self.get_object(pk)
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data)
+
+    def put(self, request, pk, format=None):
+        review = self.get_object(pk)
+        data = copy.deepcopy(request.data)
+        data['item'] = review.item.pk
+        data['user'] = review.user.pk
+        serializer = ReviewSerializer(review, data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk, format=None):
+        review = self.get_object(pk)
+        review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
