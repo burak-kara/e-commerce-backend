@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 from django.http import Http404
+import copy
 
 from rest_framework.authentication import TokenAuthentication
 from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
@@ -190,6 +191,7 @@ class OrderDetail(APIView):
         order.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 # Review Implementation..
 
 
@@ -248,7 +250,10 @@ class ReviewDetail(APIView):
 
     def put(self, request, pk, format=None):
         review = self.get_object(pk)
-        serializer = ReviewSerializer(review, data=request.data)
+        data = copy.deepcopy(request.data)
+        data['item'] = review.item.pk
+        data['user'] = review.user.pk
+        serializer = ReviewSerializer(review, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
