@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Item, User, Category
+from .models import Item, Review, User, Category
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
@@ -20,6 +20,7 @@ class AccountAdmin(UserAdmin):
 admin.site.register(User, AccountAdmin)
 admin.site.register(Item)
 admin.site.register(Category)
+admin.site.register(Review)
 
 admin.site.unregister(Group)
 admin.site.unregister(Site)
