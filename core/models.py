@@ -137,13 +137,15 @@ class Review(models.Model):
     comment = models.TextField(default='')
     # Rating between 1-10 (change MaxValueValidator to 5 if so)
     rating = models.IntegerField(default=1, validators=[
-                                 validators.MaxValueValidator(10), validators.MinValueValidator(1)])
+                                 validators.MaxValueValidator(5), validators.MinValueValidator(1)])
     # Small text field like for the title
-    title = models.CharField(max_length=100, default='')
+    title = models.CharField(max_length=100, default='', blank=False)
     # Assigns user to the review
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=False)
     # Which item is this review for
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, blank=False)
+    # Checks if the review is approved
+    is_approved = models.BooleanField(default=False)
 
     def __str__(self):
         return "rev_id_" + str(self.id)

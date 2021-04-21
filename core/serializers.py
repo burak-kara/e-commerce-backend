@@ -88,4 +88,6 @@ class ReviewSerializer(serializers.ModelSerializer):
                   'comment',
                   'rating',
                   'title',
-                  'user']
+                  'user',
+                  'item',
+                  'is_approved']
