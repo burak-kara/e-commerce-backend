@@ -46,7 +46,8 @@ class User(AbstractBaseUser):
     first_name = models.CharField(verbose_name='first_name', max_length=30)
     last_name = models.CharField(verbose_name='last_name', max_length=30)
     wallet_address = models.CharField(max_length=400)
-    date_joined = models.DateField(verbose_name='date joined', auto_now_add=True)
+    date_joined = models.DateField(
+        verbose_name='date joined', auto_now_add=True)
     last_login = models.DateField(verbose_name='last login', auto_now=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -97,10 +98,12 @@ class Category(models.Model):
 class Order(models.Model):
     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
     items = models.ManyToManyField(Item)
-    item_counts = models.CharField(max_length=600, validators=[validators.int_list_validator()])
+    item_counts = models.CharField(max_length=600, validators=[
+                                   validators.int_list_validator()])
     total_price = models.IntegerField(default=0)
     date = models.DateField(verbose_name='order_date', auto_now_add=True)
-    delivery_address = models.CharField(max_length=1000, default='Self Pick Up')
+    delivery_address = models.CharField(
+        max_length=1000, default='Self Pick Up')
 
     WAITING_FOR_PAYMENT = 0
     PAYMENT_CONFIRMED = 1
@@ -118,7 +121,29 @@ class Order(models.Model):
         (DELIVERED, 'Delivered'),
         (REJECTED, 'Rejected')
     )
-    status = models.IntegerField(choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
+    status = models.IntegerField(
+        choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
 
     def __str__(self):
         return str(self.buyer) + str(self.items)
+
+
+class Review(models.Model):
+    # Implemtation of Review as a Django Model
+
+    # Store both date and time
+    date = models.DateTimeField(auto_now=True)
+    # A large text field for the review itself
+    comment = models.TextField(default='')
+    # Rating between 1-10 (change MaxValueValidator to 5 if so)
+    rating = models.IntegerField(default=1, validators=[
+                                 validators.MaxValueValidator(10), validators.MinValueValidator(1)])
+    # Small text field like for the title
+    title = models.CharField(max_length=100, default='')
+    # Assigns user to the review
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # Which item is this review for
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "rev_id_" + str(self.id)
