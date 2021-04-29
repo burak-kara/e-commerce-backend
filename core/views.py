@@ -121,7 +121,10 @@ class OrderList(APIView):
         return ",".join([str(i) for i in item_counts])
 
     def get(self, request, format=None):
-        order = Order.objects.all()
+        if request.user.is_sales_manager:
+            order = Order.objects.all()
+        else:
+            order = Order.objects.filter(buyer=request.user.pk)
         serializer = OrderSerializer(order, many=True)
         return Response(serializer.data)
 
