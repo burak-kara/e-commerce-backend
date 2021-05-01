@@ -143,8 +143,6 @@ class BrandList(APIView):
 
     def get(self, request, category, format=None):
         brands = self.get_object_by_category(category).values_list('brand', flat=True)
-        # brands = Item.objects.all().values_list('brand', flat=True)
-        print(brands)
         return Response(brands)
 
 
