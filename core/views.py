@@ -137,7 +137,7 @@ class BrandList(APIView):
     @staticmethod
     def get_object_by_category(category):
         try:
-            return Item.objects.filter(category__iexact=category)
+            return Item.objects.filter(category__iexact=category).order_by('brand')
         except Item.DoesNotExist:
             raise Http404
 
