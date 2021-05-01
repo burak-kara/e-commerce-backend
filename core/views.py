@@ -142,7 +142,7 @@ class BrandList(APIView):
             raise Http404
 
     def get(self, request, category, format=None):
-        brands = self.get_object_by_category(category).values_list('brand', flat=True)
+        brands = self.get_object_by_category(category).values_list('brand', flat=True).distinct()
         return Response(brands)
 
 
