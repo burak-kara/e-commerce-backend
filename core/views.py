@@ -25,6 +25,19 @@ class UserDetail(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class AddressDetail(APIView):
+    @staticmethod
+    def get_user(pk):
+        try:
+            return User.objects.get(pk=pk)
+        except Item.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        user = self.get_user(pk)
+        return Response(user.addresses)
+
+
 class ItemList(APIView):
     """
     List all items, or create a new item.

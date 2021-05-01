@@ -17,6 +17,7 @@ urlpatterns = [
     path('api/user/', views.UserDetail.as_view()),
     path('api/orders/', views.OrderList.as_view()),
     path('api/orders/<int:pk>/', views.OrderDetail.as_view()),
+    path('api/addresses/<int:pk>/', views.AddressDetail.as_view()),
     # Review links
     path('api/reviews/', views.ReviewList.as_view()),
     path('api/reviews/<int:pk>/', views.ReviewDetail.as_view()),
