@@ -93,7 +93,7 @@ class ItemsByCategory(APIView):
 
 
 class ItemSearch(generics.ListCreateAPIView):
-    search_fields = ['name', 'brand', 'category', 'specs', 'description']
+    search_fields = ['name', 'brand', 'description', 'specs']
     filter_backends = (filters.SearchFilter,)
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
