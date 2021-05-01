@@ -1,6 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework import generics
+from rest_framework import filters
 from django.http import Http404
 import copy
 
@@ -88,6 +90,13 @@ class ItemsByCategory(APIView):
         item = self.get_object_by_category(category)
         serializer = ItemSerializer(item, many=True)
         return Response(serializer.data)
+
+
+class ItemSearch(generics.ListCreateAPIView):
+    search_fields = ['name', 'brand', 'category', 'specs', 'description']
+    filter_backends = (filters.SearchFilter,)
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
 
 
 class CategoryList(APIView):
