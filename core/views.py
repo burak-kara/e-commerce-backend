@@ -14,6 +14,14 @@ class UserDetail(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
 
+    def put(self, request, format=None):
+        user = request.user
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class ItemList(APIView):
     """
