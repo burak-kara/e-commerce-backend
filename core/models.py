@@ -45,6 +45,7 @@ class User(AbstractBaseUser):
     phone_number = models.CharField(max_length=30, unique=True)
     first_name = models.CharField(verbose_name='first_name', max_length=30)
     last_name = models.CharField(verbose_name='last_name', max_length=30)
+    addresses = models.CharField(max_length=1200, blank=True)
     wallet_address = models.CharField(max_length=400)
     date_joined = models.DateField(verbose_name='date joined', auto_now_add=True)
     last_login = models.DateField(verbose_name='last login', auto_now=True)
@@ -57,7 +58,7 @@ class User(AbstractBaseUser):
 
     USERNAME_FIELD = 'username'
 
-    REQUIRED_FIELDS = ['email', 'phone_number', 'first_name', 'last_name', ]
+    REQUIRED_FIELDS = ['email', 'phone_number', 'first_name', 'last_name']
 
     objects = CustomUserManager()
 
