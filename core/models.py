@@ -81,8 +81,11 @@ class Item(models.Model):
     image = models.CharField(max_length=1000, default='#')
     description = models.CharField(max_length=1000, blank=True, default='')
     specs = models.CharField(max_length=1000, blank=True, default='')
+    mean_rating = models.IntegerField(default=None,
+                                      validators=[validators.MaxValueValidator(5), validators.MinValueValidator(0)])
+    review_count = models.IntegerField(default=0)
     campaign = models.CharField(max_length=200, blank=True, default='')
-    seller = models.ForeignKey(User, on_delete=models.CASCADE)
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, default=2)
 
     def __str__(self):
         return self.name
@@ -119,31 +122,30 @@ class Order(models.Model):
         (DELIVERED, 'Delivered'),
         (REJECTED, 'Rejected')
     )
-    status = models.IntegerField(
-        choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
+    status = models.IntegerField(choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
 
     def __str__(self):
         return str(self.buyer) + str(self.items)
 
 
 class Review(models.Model):
-    # Implemtation of Review as a Django Model
-
-    # Store both date and time
     date = models.DateTimeField(auto_now=True)
-    # A large text field for the review itself
     comment = models.TextField(default='')
-    # Rating between 1-10 (change MaxValueValidator to 5 if so)
-    rating = models.IntegerField(default=1,
-                                 validators=[validators.MaxValueValidator(5), validators.MinValueValidator(1)])
-    # Small text field like for the title
+    rating = models.IntegerField(default=0,
+                                 validators=[validators.MaxValueValidator(5), validators.MinValueValidator(0)])
     title = models.CharField(max_length=100, default='', blank=False)
-    # Assigns user to the review
     user = models.ForeignKey(User, on_delete=models.CASCADE, blank=False)
-    # Which item is this review for
     item = models.ForeignKey(Item, on_delete=models.CASCADE, blank=False)
-    # Checks if the review is approved
-    is_approved = models.BooleanField(default=False)
+
+    WAITING_FOR_APPROVAL = 0
+    APPROVED = 1
+    REJECTED = 2
+    STATUS_CHOICES = (
+        (WAITING_FOR_APPROVAL, 'Waiting For Approval'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected')
+    )
+    status = models.IntegerField(choices=STATUS_CHOICES, default=WAITING_FOR_APPROVAL)
 
     def __str__(self):
         return "rev_id_" + str(self.id)
