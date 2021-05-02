@@ -10,6 +10,7 @@ urlpatterns = [
     path('rest-auth/registration/', include('rest_auth.registration.urls')),
     path('', admin.site.urls),
     path('api/categories/', views.CategoryList.as_view()),
+    path('api/brands/<category>/', views.BrandList.as_view()),
     path('api/items/', views.ItemList.as_view()),
     path('api/items/search', views.ItemSearch.as_view()),
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),

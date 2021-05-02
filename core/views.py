@@ -133,6 +133,29 @@ class CategoryList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class BrandList(APIView):
+    @staticmethod
+    def get_brands_by_category(category):
+        try:
+            return Item.objects.filter(category__iexact=category).order_by('brand')
+        except Item.DoesNotExist:
+            raise Http404
+
+    @staticmethod
+    def get_all_brands(category):
+        try:
+            return Item.objects.all().order_by('brand')
+        except Item.DoesNotExist:
+            raise Http404
+
+    def get(self, request, category, format=None):
+        if category == 'all':
+            brands = self.get_all_brands(category).values_list('brand', flat=True).distinct()
+        else:
+            brands = self.get_brands_by_category(category).values_list('brand', flat=True).distinct()
+        return Response(brands)
+
+
 class OrderList(APIView):
     """
     List all orders, or create a new one.
