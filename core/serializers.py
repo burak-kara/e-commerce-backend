@@ -57,6 +57,8 @@ class ItemSerializer(serializers.ModelSerializer):
                   'image',
                   'description',
                   'specs',
+                  'mean_rating',
+                  'review_count',
                   'campaign',
                   'seller']
 
@@ -90,4 +92,4 @@ class ReviewSerializer(serializers.ModelSerializer):
                   'title',
                   'user',
                   'item',
-                  'is_approved']
+                  'status']

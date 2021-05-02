@@ -107,8 +107,8 @@ class ItemsByCategory(APIView):
 
 
 class ItemSearch(generics.ListAPIView):
-    ordering_fields = ['name', 'price']
-    filterset_fields = ['category', 'brand']
+    ordering_fields = ['name', 'price', 'mean_rating']
+    filterset_fields = ['category', 'brand', 'mean_rating']
     search_fields = ['name', 'brand', 'description', 'specs']
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     queryset = Item.objects.all()
@@ -251,9 +251,6 @@ class OrderDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# Review Implementation..
-
-
 class ReviewList(APIView):
     """
     List all reviews, or post a new review.
@@ -307,11 +304,38 @@ class ReviewDetail(APIView):
         serializer = ReviewSerializer(review)
         return Response(serializer.data)
 
+    @staticmethod
+    def calculate_mean_rating_up(prev_mean, rating, prev_review_count):
+        return ((prev_mean * prev_review_count) + rating) / (prev_review_count + 1)
+
+    @staticmethod
+    def calculate_mean_rating_down(prev_mean, rating, prev_review_count):
+        return ((prev_mean * prev_review_count) - rating) / (prev_review_count - 1)
+
     def put(self, request, pk, format=None):
         review = self.get_object(pk)
         data = copy.deepcopy(request.data)
         data['item'] = review.item.pk
         data['user'] = review.user.pk
+
+        if int(review.status) == 0 and int(request.data['status']) == 1:
+            item = Item.objects.get(pk=review.item.pk)
+            updated_review_count = item.review_count + 1
+            updated_mean_rating = self.calculate_mean_rating_up(item.mean_rating, review.rating, item.review_count)
+            item_data = {'mean_rating': updated_mean_rating, 'review_count': updated_review_count}
+            serializer = ItemSerializer(item, data=item_data)
+            if serializer.is_valid():
+                serializer.save()
+
+        if int(review.status) == 1 and int(request.data['status']) == 0:
+            item = Item.objects.get(pk=review.item.pk)
+            updated_review_count = item.review_count - 1
+            updated_mean_rating = self.calculate_mean_rating_down(item.mean_rating, review.rating, item.review_count)
+            item_data = {'mean_rating': updated_mean_rating, 'review_count': updated_review_count}
+            serializer = ItemSerializer(item, data=item_data)
+            if serializer.is_valid():
+                serializer.save()
+
         serializer = ReviewSerializer(review, data=data)
         if serializer.is_valid():
             serializer.save()
@@ -320,5 +344,14 @@ class ReviewDetail(APIView):
 
     def delete(self, request, pk, format=None):
         review = self.get_object(pk)
+
+        item = Item.objects.get(pk=review.item.pk)
+        updated_review_count = item.review_count - 1
+        updated_mean_rating = self.calculate_mean_rating_down(item.mean_rating, review.rating, item.review_count)
+        item_data = {'mean_rating': updated_mean_rating, 'review_count': updated_review_count}
+        serializer = ItemSerializer(item, data=item_data)
+        if serializer.is_valid():
+            serializer.save()
+
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
