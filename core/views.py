@@ -6,8 +6,8 @@ from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 import copy
-
 from rest_framework.authentication import TokenAuthentication
+from django.core.mail import send_mail
 from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
 from .models import Item, User, Category, Order, Review
 
@@ -110,7 +110,8 @@ class ItemSearch(generics.ListAPIView):
     ordering_fields = ['name', 'price', 'mean_rating']
     filterset_fields = ['category', 'brand', 'mean_rating']
     search_fields = ['name', 'brand', 'description', 'specs']
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    filter_backends = [filters.SearchFilter,
+                       filters.OrderingFilter, DjangoFilterBackend]
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
 
@@ -150,9 +151,11 @@ class BrandList(APIView):
 
     def get(self, request, category, format=None):
         if category == 'all':
-            brands = self.get_all_brands(category).values_list('brand', flat=True).distinct()
+            brands = self.get_all_brands(category).values_list(
+                'brand', flat=True).distinct()
         else:
-            brands = self.get_brands_by_category(category).values_list('brand', flat=True).distinct()
+            brands = self.get_brands_by_category(
+                category).values_list('brand', flat=True).distinct()
         return Response(brands)
 
 
@@ -176,6 +179,25 @@ class OrderList(APIView):
     def to_comma_sep_values(item_counts):
         return ",".join([str(i) for i in item_counts])
 
+    def get_item_by_id(self, pk):
+        try:
+            return Item.objects.get(pk=pk)
+        except Item.DoesNotExist:
+            raise Http404
+
+    def email_body(self, items, item_counts, total_price, delivery_address):
+        items = [j.name for j in [self.get_item_by_id(i) for i in items]]
+        counts = item_counts
+        result = "Your order has been confirmed!\n\nOrder Detail:\n"
+
+        for i, item in enumerate(items):
+            result += str(item) + " X " + str(counts[i]) + "\n"
+
+        result += "\nTotal Price: " + str(total_price) + "₺\n"
+        result += "\nDelivery Adress: " + str(delivery_address) + "\n"
+
+        return result
+
     def get(self, request, format=None):
         if request.user.is_sales_manager:
             order = Order.objects.all()
@@ -187,6 +209,7 @@ class OrderList(APIView):
     def post(self, request, format=None):
         buyer = request.user.pk
         items = [int(i) for i in request.data['items'].keys()]
+
         item_counts = [int(i) for i in request.data['items'].values()]
         total_price = self.calculate_total_price(items, item_counts)
 
@@ -195,6 +218,13 @@ class OrderList(APIView):
                   'total_price': total_price, 'delivery_address': request.data['delivery_address']})
         if serializer.is_valid():
             serializer.save()
+            mail_body = self.email_body(
+                items, item_counts, total_price, request.data['delivery_address'])
+            # print(mail_body)
+            send_mail("Your Order Has Been Confirmed 🚀",
+                      mail_body,
+                      recipient_list=[request.user.email],
+                      from_email="info.ozu.store@gmail.com")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -214,6 +244,23 @@ class OrderDetail(APIView):
             return Order.objects.get(pk=pk)
         except Item.DoesNotExist:
             raise Http404
+
+    @staticmethod
+    def email_body(order):
+
+        items = [i.name for i in order.items.all()]
+        counts = (order.item_counts).split(",")
+        result = "Your order status has been changed for the following order:\n\nOrder Detail:\n"
+
+        for i, item in enumerate(items):
+            result += str(item) + " X " + counts[i] + "\n"
+        result += "\nTotal Price: " + str(order.total_price) + "₺\n"
+        result += "\nDelivery Adress: " + str(order.delivery_address) + "\n"
+
+        result += "\nOrder Status: " + \
+            str(order.STATUS_CHOICES[order.status][1])
+
+        return result
 
     def get(self, request, pk, format=None):
         order = self.get_order(pk)
@@ -242,6 +289,11 @@ class OrderDetail(APIView):
                                                   'status': status_})
         if serializer.is_valid():
             serializer.save()
+            mail_body = self.email_body(order)
+            send_mail("Your Order Status Has Been Updated ⌛",
+                      mail_body,
+                      recipient_list=[order.buyer.email],
+                      from_email="info.ozu.store@gmail.com")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -321,8 +373,10 @@ class ReviewDetail(APIView):
         if int(review.status) == 0 and int(request.data['status']) == 1:
             item = Item.objects.get(pk=review.item.pk)
             updated_review_count = item.review_count + 1
-            updated_mean_rating = self.calculate_mean_rating_up(item.mean_rating, review.rating, item.review_count)
-            item_data = {'mean_rating': updated_mean_rating, 'review_count': updated_review_count}
+            updated_mean_rating = self.calculate_mean_rating_up(
+                item.mean_rating, review.rating, item.review_count)
+            item_data = {'mean_rating': updated_mean_rating,
+                         'review_count': updated_review_count}
             serializer = ItemSerializer(item, data=item_data)
             if serializer.is_valid():
                 serializer.save()
@@ -330,8 +384,10 @@ class ReviewDetail(APIView):
         if int(review.status) == 1 and int(request.data['status']) == 0:
             item = Item.objects.get(pk=review.item.pk)
             updated_review_count = item.review_count - 1
-            updated_mean_rating = self.calculate_mean_rating_down(item.mean_rating, review.rating, item.review_count)
-            item_data = {'mean_rating': updated_mean_rating, 'review_count': updated_review_count}
+            updated_mean_rating = self.calculate_mean_rating_down(
+                item.mean_rating, review.rating, item.review_count)
+            item_data = {'mean_rating': updated_mean_rating,
+                         'review_count': updated_review_count}
             serializer = ItemSerializer(item, data=item_data)
             if serializer.is_valid():
                 serializer.save()
@@ -347,8 +403,10 @@ class ReviewDetail(APIView):
 
         item = Item.objects.get(pk=review.item.pk)
         updated_review_count = item.review_count - 1
-        updated_mean_rating = self.calculate_mean_rating_down(item.mean_rating, review.rating, item.review_count)
-        item_data = {'mean_rating': updated_mean_rating, 'review_count': updated_review_count}
+        updated_mean_rating = self.calculate_mean_rating_down(
+            item.mean_rating, review.rating, item.review_count)
+        item_data = {'mean_rating': updated_mean_rating,
+                     'review_count': updated_review_count}
         serializer = ItemSerializer(item, data=item_data)
         if serializer.is_valid():
             serializer.save()

@@ -133,7 +133,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, '../static')
 
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+# Email Configs
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "info.ozu.store@gmail.com"
+EMAIL_HOST_PASSWORD = "Test123."
 
 AUTH_USER_MODEL = 'core.User'
 
