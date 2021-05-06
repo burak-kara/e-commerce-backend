@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
@@ -7,6 +8,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 import copy
 from rest_framework.authentication import TokenAuthentication
+from django.views.generic.base import TemplateResponseMixin, TemplateView, View
+from allauth.account.adapter import get_adapter
+from django.shortcuts import redirect
 from django.core.mail import send_mail
 from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
 from .models import Item, User, Category, Order, Review
@@ -221,7 +225,7 @@ class OrderList(APIView):
             mail_body = self.email_body(
                 items, item_counts, total_price, request.data['delivery_address'])
             # print(mail_body)
-            send_mail("Your Order Has Been Confirmed 🚀",
+            send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
                       mail_body,
                       recipient_list=[request.user.email],
                       from_email="info.ozu.store@gmail.com")
@@ -290,7 +294,7 @@ class OrderDetail(APIView):
         if serializer.is_valid():
             serializer.save()
             mail_body = self.email_body(order)
-            send_mail("Your Order Status Has Been Updated ⌛",
+            send_mail("[Ozu Store] - Your Order Status Has Been Updated ⌛",
                       mail_body,
                       recipient_list=[order.buyer.email],
                       from_email="info.ozu.store@gmail.com")
@@ -413,3 +417,25 @@ class ReviewDetail(APIView):
 
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Email Verification
+
+
+# class ConfirmEmail(APIView):
+#    def post(self, request, format=None):
+#        user = request.user
+#        serializer = UserSerializer(user, data=request.data)
+#        if serializer.is_valid():
+#            serializer.save()
+#            return Response(serializer.data)
+#        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Create your views here.
+
+
+def confirm_email(request, key):
+
+    # render function takes argument  - request
+    # and return HTML as response
+    return "ok"  # render(request, "./home.html")
