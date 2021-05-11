@@ -31,13 +31,13 @@ urlpatterns = [
     path('api/reviews/', views.ReviewList.as_view()),
     path('api/reviews/<int:pk>/', views.ReviewDetail.as_view()),
     path('api/item/reviews/<int:item>/', views.ReviewsOfItem.as_view()),
+    path('api/rating-from-comment/', views.RetrieveRatingFromComment.as_view()),
     # Verify Email Views
     path('rest-auth/registration/', RegisterView.as_view(), name='account_signup'),
     url(r'^verify-email/$', VerifyEmailView.as_view(),
         name='account_email_verification_sent'),
     path('rest-auth/registration/account-confirm-email/<key>',
          confirm_email, name='account_confirm_email')
-
 
 ]
 
