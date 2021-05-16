@@ -47,7 +47,8 @@ class User(AbstractBaseUser):
     last_name = models.CharField(verbose_name='last_name', max_length=30)
     addresses = models.CharField(max_length=1200, blank=True)
     wallet_address = models.CharField(max_length=400)
-    date_joined = models.DateField(verbose_name='date joined', auto_now_add=True)
+    date_joined = models.DateField(
+        verbose_name='date joined', auto_now_add=True)
     last_login = models.DateField(verbose_name='last login', auto_now=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -101,10 +102,12 @@ class Category(models.Model):
 class Order(models.Model):
     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
     items = models.ManyToManyField(Item)
-    item_counts = models.CharField(max_length=600, validators=[validators.int_list_validator()])
+    item_counts = models.CharField(max_length=600, validators=[
+                                   validators.int_list_validator()])
     total_price = models.IntegerField(default=0)
     date = models.DateField(verbose_name='order_date', auto_now_add=True)
-    delivery_address = models.CharField(max_length=1000, default='Self Pick Up')
+    delivery_address = models.CharField(
+        max_length=1000, default='Self Pick Up')
 
     WAITING_FOR_PAYMENT = 0
     PAYMENT_CONFIRMED = 1
@@ -122,7 +125,8 @@ class Order(models.Model):
         (DELIVERED, 'Delivered'),
         (REJECTED, 'Rejected')
     )
-    status = models.IntegerField(choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
+    status = models.IntegerField(
+        choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
 
     def __str__(self):
         return str(self.buyer) + str(self.items)
@@ -145,7 +149,12 @@ class Review(models.Model):
         (APPROVED, 'Approved'),
         (REJECTED, 'Rejected')
     )
-    status = models.IntegerField(choices=STATUS_CHOICES, default=WAITING_FOR_APPROVAL)
+    status = models.IntegerField(
+        choices=STATUS_CHOICES, default=WAITING_FOR_APPROVAL)
 
     def __str__(self):
         return "rev_id_" + str(self.id)
+
+
+class bugfixdummy(models.Model):
+    dummy = models.TextField(default='')

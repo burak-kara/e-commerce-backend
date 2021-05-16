@@ -17,6 +17,9 @@ from django.shortcuts import redirect
 from django.core.mail import send_mail
 from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
 from .models import Item, User, Category, Order, Review
+from rest_framework import permissions
+from django_otp import devices_for_user
+from django_otp.plugins.otp_totp.models import TOTPDevice
 
 nltk.download('vader_lexicon')
 
@@ -424,22 +427,6 @@ class ReviewDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# Email Verification
-
-
-# class ConfirmEmail(APIView):
-#    def post(self, request, format=None):
-#        user = request.user
-#        serializer = UserSerializer(user, data=request.data)
-#        if serializer.is_valid():
-#            serializer.save()
-#            return Response(serializer.data)
-#        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Create your views here.
-
-
 def confirm_email(request, key):
     # render function takes argument  - request
     # and return HTML as response
@@ -472,10 +459,12 @@ class RetrieveRatingFromComment(APIView):
             translated_comment = ts.translate_html(comment, translator=ts.google, to_language='en',
                                                    translator_params={})
 
-            sentiment_analysis = self.nltk_sentiment(_sentence=translated_comment)
+            sentiment_analysis = self.nltk_sentiment(
+                _sentence=translated_comment)
 
             sentiment_score = sentiment_analysis['compound']
-            normalized_sentiment_score = self.normalize(sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
+            normalized_sentiment_score = self.normalize(
+                sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
             retrieved_rating = round(normalized_sentiment_score)
 
             data = {'sentiment_score': sentiment_score,
@@ -486,3 +475,38 @@ class RetrieveRatingFromComment(APIView):
             return Response(data)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+# 2-factor Authentication
+
+
+def get_user_totp_device(self, user, confirmed=None):
+    devices = devices_for_user(user, confirmed=confirmed)
+    for device in devices:
+        if isinstance(device, TOTPDevice):
+            return device
+
+
+class TOTPCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device:
+            device = user.totpdevice_set.create(confirmed=False)
+        url = device.config_url
+        return Response(url, status=status.HTTP_201_CREATED)
+
+
+class TOTPVerifyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, token, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device == None and device.verify_token(token):
+            if not device.confirmed:
+                device.confirmed == True
+                device.save()
+            return Response(True, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_201_CREATED)

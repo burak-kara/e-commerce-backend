@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'core',
     'corsheaders',
     'django_filters',
+    'django_otp',
+    'django_otp.plugins.otp_totp'
 ]
 
 MIDDLEWARE = [
@@ -58,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django_otp.middleware.OTPMiddleware'
 ]
 
 ROOT_URLCONF = 'ecommerce_api.urls'
@@ -132,6 +135,9 @@ USE_TZ = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, '../static')
+
+# 2fa configs
+#LOGIN_URL = '/sign-in/'
 
 # Email Configs
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
