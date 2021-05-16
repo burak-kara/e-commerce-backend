@@ -6,6 +6,9 @@ from rest_framework import generics
 from rest_framework import filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import translators as ts
 import copy
 from rest_framework.authentication import TokenAuthentication
 from django.views.generic.base import TemplateResponseMixin, TemplateView, View
@@ -14,6 +17,11 @@ from django.shortcuts import redirect
 from django.core.mail import send_mail
 from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
 from .models import Item, User, Category, Order, Review
+from rest_framework import permissions
+from django_otp import devices_for_user
+from django_otp.plugins.otp_totp.models import TOTPDevice
+
+nltk.download('vader_lexicon')
 
 
 class UserDetail(APIView):
@@ -262,7 +270,7 @@ class OrderDetail(APIView):
         result += "\nDelivery Adress: " + str(order.delivery_address) + "\n"
 
         result += "\nOrder Status: " + \
-            str(order.STATUS_CHOICES[order.status][1])
+                  str(order.STATUS_CHOICES[order.status][1])
 
         return result
 
@@ -418,24 +426,87 @@ class ReviewDetail(APIView):
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-# Email Verification
-
-
-# class ConfirmEmail(APIView):
-#    def post(self, request, format=None):
-#        user = request.user
-#        serializer = UserSerializer(user, data=request.data)
-#        if serializer.is_valid():
-#            serializer.save()
-#            return Response(serializer.data)
-#        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-# Create your views here.
-
 
 def confirm_email(request, key):
-
     # render function takes argument  - request
     # and return HTML as response
     return "ok"  # render(request, "./home.html")
+
+
+class RetrieveRatingFromComment(APIView):
+
+    @staticmethod
+    def nltk_sentiment(_sentence):
+        _nltk_sentiment = SentimentIntensityAnalyzer()
+        score = _nltk_sentiment.polarity_scores(_sentence)
+        return score
+
+    @staticmethod
+    def normalize(value, old_min_max, new_min_max):
+        OldMin = old_min_max[0]
+        OldMax = old_min_max[1]
+        NewMin = new_min_max[0]
+        NewMax = new_min_max[1]
+        OldValue = value
+        OldRange = (OldMax - OldMin)
+        NewRange = (NewMax - NewMin)
+        return (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
+
+    def post(self, request, format=None):
+        try:
+            comment = request.data['comment']
+
+            translated_comment = ts.translate_html(comment, translator=ts.google, to_language='en',
+                                                   translator_params={})
+
+            sentiment_analysis = self.nltk_sentiment(
+                _sentence=translated_comment)
+
+            sentiment_score = sentiment_analysis['compound']
+            normalized_sentiment_score = self.normalize(
+                sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
+            retrieved_rating = round(normalized_sentiment_score)
+
+            data = {'sentiment_score': sentiment_score,
+                    'raw_rating': normalized_sentiment_score,
+                    'retrieved_rating': retrieved_rating,
+                    'translated_comment': translated_comment}
+
+            return Response(data)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+# 2-factor Authentication
+
+
+def get_user_totp_device(self, user, confirmed=None):
+    devices = devices_for_user(user, confirmed=confirmed)
+    for device in devices:
+        if isinstance(device, TOTPDevice):
+            return device
+
+
+class TOTPCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device:
+            device = user.totpdevice_set.create(confirmed=False)
+        url = device.config_url
+        return Response(url, status=status.HTTP_201_CREATED)
+
+
+class TOTPVerifyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, token, format=None):
+        user = request.user
+        device = get_user_totp_device(self, user)
+        if not device == None and device.verify_token(token):
+            if not device.confirmed:
+                device.confirmed == True
+                device.save()
+            return Response(True, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_201_CREATED)
