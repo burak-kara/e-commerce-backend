@@ -154,7 +154,3 @@ class Review(models.Model):
 
     def __str__(self):
         return "rev_id_" + str(self.id)
-
-
-class bugfixdummy(models.Model):
-    dummy = models.TextField(default='')
