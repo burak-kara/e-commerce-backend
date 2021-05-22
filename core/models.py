@@ -56,6 +56,7 @@ class User(AbstractBaseUser):
     is_superuser = models.BooleanField(default=False)
     is_product_manager = models.BooleanField(default=False)
     is_sales_manager = models.BooleanField(default=False)
+    twoFA_enabled = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'username'
 
