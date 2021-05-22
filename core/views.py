@@ -22,6 +22,9 @@ from .models import Item, User, Category, Order, Review
 from rest_framework import permissions
 from django_otp import devices_for_user
 from django_otp.plugins.otp_totp.models import TOTPDevice
+# Stats
+from datetime import date
+import json
 
 nltk.download('vader_lexicon')
 
@@ -538,9 +541,11 @@ class RecommendedProducts(APIView):
 
         counts = frequency.values()
         normalized_counts = [float(i) / sum(counts) for i in counts]
-        chosen_category = np.random.choice(list(frequency.keys()), p=normalized_counts)
+        chosen_category = np.random.choice(
+            list(frequency.keys()), p=normalized_counts)
 
-        all_from_chosen_category = Item.objects.filter(category__iexact=chosen_category)
+        all_from_chosen_category = Item.objects.filter(
+            category__iexact=chosen_category)
         all_from_chosen_category = list(all_from_chosen_category)
 
         return random.sample(all_from_chosen_category, 1)[0]
@@ -548,16 +553,123 @@ class RecommendedProducts(APIView):
     def post(self, request, recommendation_count, format=None):
 
         user_id = request.user.pk
-        previous_purchase_categories = self.get_previous_purchase_categories(user_id)
+        previous_purchase_categories = self.get_previous_purchase_categories(
+            user_id)
 
         recommended_products = list()
 
         for i in range(recommendation_count):
-            recommended_products.append(self.get_random_recommended_products(previous_purchase_categories))
+            recommended_products.append(
+                self.get_random_recommended_products(previous_purchase_categories))
 
         print(recommended_products)
-        recommended_product_ids = [product.pk for product in recommended_products]
+        recommended_product_ids = [
+            product.pk for product in recommended_products]
 
         data = {'recommended_product_ids': recommended_product_ids}
+
+        return Response(data)
+
+#Charts and stats
+
+
+class StatisticDetail(APIView):
+    @staticmethod
+    def create_stats(in_data):
+
+        result = {}  # Holds stats
+        result[in_data['date'][0]] = []  # Create an empty entry for day one
+
+        # day by day sold item count
+        item_count_day = {}
+        daily_income = 0
+        for i, items in enumerate(in_data["items"]):
+            # Add every price to daily income
+            daily_income += in_data['total_price'][i]
+
+            # Once a day passes
+            if in_data['date'][i] not in result.keys():
+                # Sort the distionary by value
+                item_count_day = {k: v for k, v in sorted(
+                    item_count_day.items(), key=lambda item: item[1], reverse=True)}
+
+                # Add stats to days
+                result[in_data['date'][i - 1]].append(item_count_day)
+                result[in_data['date'][i - 1]].append(daily_income)
+
+                # Add an empty slot for a new day
+                result[in_data['date'][i]] = []
+
+                # Reset stats
+                item_count_day = {}
+                daily_income = 0
+
+            # Split orders by item and add up item counts
+            for j, item in enumerate(items):
+
+                # Create an entry for an item if not in dictionary
+                if item[0] not in item_count_day.keys():
+                    item_count_day[item[0]] = int(
+                        in_data['item_counts'][i].split(",")[j])
+
+                # Add how much it has been ordered in current order
+                else:
+                    item_count_day[item[0]
+                                   ] += int(in_data['item_counts'][i].split(",")[j])
+        # Sort the distionary by value
+                item_count_day = {k: v for k, v in sorted(
+                    item_count_day.items(), key=lambda item: item[1], reverse=True)}
+        # Add todays stats
+        result[in_data['date'][i]].append(item_count_day)
+        result[in_data['date'][i - 1]].append(daily_income)
+
+        return result
+
+    def get(self, request, format=None):
+        orders_in_frame = []  # Will store every order inside the given timeframe
+
+        # Only sales manager can access stats
+        if request.user.is_sales_manager:
+            # Get every order filter by date later
+            orders = Order.objects.all()
+            for order in orders:
+                # Delta = order.date - date.today()).days -diff between days-
+                if (order.date - date.today()).days >= -int(request.data['days']):
+                    # Ex: An order issued yesterday will have a delta -1
+                    # requesting 1 in the request body will return every order
+                    # from today and yesterday
+                    orders_in_frame.append(order)
+
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        # Create a dictionary with orders inside the frame and their important
+        # attributes
+        result = {'id': [],
+                  'items': [],
+                  'item_counts': [],
+                  'total_price': [],
+                  'date': []}
+
+        for order in orders_in_frame:
+            for key in result.keys():
+                result[key].append(getattr(order, key))
+
+        # Swap item object references to names and ids and
+        # convert dates to string to return a response
+        items_ids = []
+        date_strs = []
+        for item, temp_date in zip(result['items'], result['date']):
+            temp_item = [(j.id, j.name) for j in item.all()]
+            date_strs.append(str(temp_date))
+            items_ids.append(temp_item)
+        result['items'] = items_ids
+        result['date'] = date_strs
+
+        # Example date: "2021-05-21"
+        # For every date 0th index is day by day sold item count
+        # For every date 1st index is day by day revenue
+        # Item counts are sorted so top X can be obtained
+        data = self.create_stats(result)
 
         return Response(data)
