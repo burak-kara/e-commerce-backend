@@ -10,6 +10,8 @@ import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import translators as ts
 import copy
+import numpy as np
+import random
 from rest_framework.authentication import TokenAuthentication
 from django.views.generic.base import TemplateResponseMixin, TemplateView, View
 from allauth.account.adapter import get_adapter
@@ -476,6 +478,7 @@ class RetrieveRatingFromComment(APIView):
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
 # 2-factor Authentication
 
 
@@ -510,3 +513,51 @@ class TOTPVerifyView(APIView):
                 device.save()
             return Response(True, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_201_CREATED)
+
+
+class RecommendedProducts(APIView):
+
+    @staticmethod
+    def get_previous_purchase_categories(user_id):
+        orders = Order.objects.filter(buyer=user_id)
+
+        previous_purchase_categories = list()
+        for order in orders:
+            for item in order.items.all():
+                previous_purchase_categories.append(item.category)
+        return previous_purchase_categories
+
+    @staticmethod
+    def get_random_recommended_products(previous_purchase_categories):
+        frequency = {}
+        for item in previous_purchase_categories:
+            if item in frequency:
+                frequency[item] += 1
+            else:
+                frequency[item] = 1
+
+        counts = frequency.values()
+        normalized_counts = [float(i) / sum(counts) for i in counts]
+        chosen_category = np.random.choice(list(frequency.keys()), p=normalized_counts)
+
+        all_from_chosen_category = Item.objects.filter(category__iexact=chosen_category)
+        all_from_chosen_category = list(all_from_chosen_category)
+
+        return random.sample(all_from_chosen_category, 1)[0]
+
+    def post(self, request, recommendation_count, format=None):
+
+        user_id = request.user.pk
+        previous_purchase_categories = self.get_previous_purchase_categories(user_id)
+
+        recommended_products = list()
+
+        for i in range(recommendation_count):
+            recommended_products.append(self.get_random_recommended_products(previous_purchase_categories))
+
+        print(recommended_products)
+        recommended_product_ids = [product.pk for product in recommended_products]
+
+        data = {'recommended_product_ids': recommended_product_ids}
+
+        return Response(data)
