@@ -719,26 +719,37 @@ class CampaignDetail(APIView):
         except Campaign.DoesNotExist:
             raise Http404
 
-    def get(self, request, uuid, format=None):
-        campaign = self.get_object(uuid)
-        serializer = CampaignSerializer(campaign)
-        return Response(serializer.data)
+    def delete(self, request, uuid, format=None):
+        if request.user.is_sales_manager:
+            Campaign.objects.get(id=uuid).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-    def delete(self, request, pk, format=None):
-        campaign = self.get_object(pk)
-        campaign.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def get(self, request, uuid, format=None):
+        if request.user.is_sales_manager:
+            campaign = self.get_object(uuid)
+            serializer = CampaignSerializer(campaign)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class CampaignList(APIView):
     def get(self, request, format=None):
-        item = Campaign.objects.all()
-        serializer = CampaignSerializer(item, many=True)
-        return Response(serializer.data)
+        if request.user.is_sales_manager:
+            item = Campaign.objects.all()
+            serializer = CampaignSerializer(item, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     def post(self, request, format=None):
-        serializer = CampaignSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if request.user.is_sales_manager:
+            serializer = CampaignSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
