@@ -365,7 +365,7 @@ class ReviewDetail(APIView):
     def get_object(pk):
         try:
             return Review.objects.get(pk=pk)
-        except Item.DoesNotExist:
+        except Review.DoesNotExist:
             raise Http404
 
     def get(self, request, pk, format=None):
@@ -623,7 +623,70 @@ class StatisticDetail(APIView):
         result[in_data['date'][i]].append(item_count_day)
         result[in_data['date'][i - 1]].append(daily_income)
 
-        return result
+        # Refactor data
+        refactored_result = {
+            "last_5_total_revenue": {
+                "days": [],
+                "revenue": {
+                    "name": 'Total Revenue',
+                    "data": []
+                }
+            },
+            "top_5_sold_products_all_time": {
+                "products": [],
+                "counts": {
+                    "name": 'Total Sold Count',
+                    "data": []
+                }
+            },
+            "top_5_sold_products_all_time_shares": [],
+            "total_sold_product_counts_5_days": {
+                "days": [],
+                "revenue": {
+                    "name": "Total Sold Product Count",
+                    "data": []
+                }
+            }
+        }
+        all_sales = {}
+
+        for key in result.keys():
+            data = result[key]
+            refactored_result["last_5_total_revenue"]["days"].append(key)
+            refactored_result["total_sold_product_counts_5_days"]["days"].append(
+                key)
+            refactored_result["last_5_total_revenue"]["revenue"]["data"].append(
+                data[1])
+            refactored_result["total_sold_product_counts_5_days"]["revenue"]["data"].append(
+                sum(list(data[0].values())))
+
+            for item in data[0].keys():
+                if item not in all_sales.keys():
+                    all_sales[item] = int(data[0][item])
+                else:
+                    all_sales[item] += int(data[0][item])
+
+        all_sales = {k: v for k, v in sorted(
+            all_sales.items(), key=lambda item: item[1], reverse=True)}
+
+        top_5_sales = list(all_sales.values())[:5]
+        top_5_sale_product = [Item.objects.get(
+            pk=i).name for i in list(all_sales.keys())[:5]]
+
+        refactored_result["top_5_sold_products_all_time"]["products"] = top_5_sale_product
+        refactored_result["top_5_sold_products_all_time"]["counts"]["data"] = top_5_sales
+
+        top_5_sales_shares = [round(i / sum(top_5_sales), 2)
+                              for i in top_5_sales]
+        for item, share in zip(top_5_sale_product, top_5_sales_shares):
+            refactored_result["top_5_sold_products_all_time_shares"].append(
+                {
+                    "name": item,
+                    "share": share
+                }
+            )
+
+        return refactored_result
 
     def get(self, request, format=None):
         orders_in_frame = []  # Will store every order inside the given timeframe
@@ -633,12 +696,7 @@ class StatisticDetail(APIView):
             # Get every order filter by date later
             orders = Order.objects.all()
             for order in orders:
-                # Delta = order.date - date.today()).days -diff between days-
-                if (order.date - date.today()).days >= -int(request.data['days']):
-                    # Ex: An order issued yesterday will have a delta -1
-                    # requesting 1 in the request body will return every order
-                    # from today and yesterday
-                    orders_in_frame.append(order)
+                orders_in_frame.append(order)
 
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
