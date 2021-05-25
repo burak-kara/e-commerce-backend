@@ -50,6 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
                   'is_sales_manager',
                   'is_product_manager', 
                   'is_admin',
+                  'twoFA_enabled',
                   'balance',
                   'wallet_address', 
                   'private_wallet_address']
