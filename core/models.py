@@ -21,24 +21,7 @@ f = open(contract_abi_directory)
 temp_abi = json.load(f)
 contract = w3.eth.contract(address =contract_address , abi =temp_abi)
 
-# print("ABC")
-
-
-
-
 class CustomUserManager(BaseUserManager):
-
-    # def initialize_chain_connection():
-    #         w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/")) # "1-s2 provider has the most uptime" - Emir
-    #         w3.middleware_onion.inject(geth_poa_middleware, layer=0) # might cause errors lul 
-    #         return w3
-
-    # def create_wallet(self):
-    #     w3 = initialize_chain_connection()
-    #     created_wallet_address = w3.eth.account.create()
-    #     print(created_wallet_address.address)
-    #     print(created_wallet_address.privateKey)
-    #     return created_wallet_address.address, created_wallet_address.privateKey.hex()
 
     def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,private_wallet_address=None,wallet_address=None,password=None):
         a,b = self.create_wallet()    
