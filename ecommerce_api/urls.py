@@ -45,7 +45,7 @@ urlpatterns = [
             views.TOTPVerifyView.as_view(), name='totp-login'),
     #funding URL
     path('api/funding/', views.Funding.as_view()),
-    path('api/reviews/<int:amount>/', views.Funding.as_view()),
+    path('api/funding/<int:amount>/', views.Funding.as_view()),
     # get all users
     path('api/getAll/', views.GetAllUsers.as_view()),
     path('api/updateSales/', views.updateUserSalesMgr.as_view()),
