@@ -38,7 +38,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -55,7 +54,6 @@ class UserSerializer(serializers.ModelSerializer):
                   'wallet_address', 
                   'private_wallet_address']
 
-
 class UserSelectSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -67,6 +65,7 @@ class UserSelectSerializer(serializers.ModelSerializer):
                   'is_admin',
                   'is_superuser'
                   ]
+                  
 class UserSalesMgrSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
@@ -75,6 +74,7 @@ class UserSalesMgrSerializer(serializers.ModelSerializer):
               'last_name', 
               'is_sales_manager',
               ]
+              
 class UserProductMgrSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
