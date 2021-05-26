@@ -31,6 +31,8 @@ urlpatterns = [
     path('api/reviews/<int:pk>/', views.ReviewDetail.as_view()),
     path('api/item/reviews/<int:item>/', views.ReviewsOfItem.as_view()),
     path('api/rating-from-comment/', views.RetrieveRatingFromComment.as_view()),
+    path('api/get-recomended-products/<int:recommendation_count>/',
+         views.RecommendedProducts.as_view()),
     # Verify Email URLs
     path('rest-auth/registration/', RegisterView.as_view(), name='account_signup'),
     url(r'^verify-email/$', VerifyEmailView.as_view(),
@@ -41,6 +43,12 @@ urlpatterns = [
     re_path(r'^totp/create/$', views.TOTPCreateView.as_view(), name='totp-create'),
     re_path(r'^totp/login/(?P<token>[0-9]{6})/$',
             views.TOTPVerifyView.as_view(), name='totp-login'),
+    # Statistics
+    path('api/stats/', views.StatisticDetail.as_view()),
+
+    # Campaign
+    path('api/campaign/<str:uuid>/', views.CampaignDetail.as_view()),
+    path('api/campaign/', views.CampaignList.as_view()),
 
 ]
 

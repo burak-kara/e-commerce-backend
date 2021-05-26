@@ -10,16 +10,23 @@ import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import translators as ts
 import copy
+import numpy as np
+import random
 from rest_framework.authentication import TokenAuthentication
 from django.views.generic.base import TemplateResponseMixin, TemplateView, View
 from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from django.core.mail import send_mail
-from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
-from .models import Item, User, Category, Order, Review
+from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, CampaignSerializer
+from .models import Item, User, Category, Order, Review, Campaign
 from rest_framework import permissions
 from django_otp import devices_for_user
 from django_otp.plugins.otp_totp.models import TOTPDevice
+# Stats
+from datetime import date
+import json
+# Campaigns
+from rest_framework.exceptions import ValidationError
 
 nltk.download('vader_lexicon')
 
@@ -181,9 +188,40 @@ class OrderList(APIView):
         try:
             total_price = 0
             for i, pk in enumerate(items):
+
                 item = Item.objects.get(pk=pk)
-                total_price += int(item.price) * item_counts[i]
-            return total_price
+                campaigns = item.campaign.all()
+
+                for campaign in campaigns:
+                    # Buy X get Y free
+                    if int(campaign.campaign_amount) == 0:
+                        print("HA")
+                        if item_counts[i] % int(campaign.campaign_x) == 0:
+                            total_price += int(item.price) * item_counts[i]
+                            total_price *= 1 - \
+                                ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                                  ) / int(campaign.campaign_x))
+                        else:
+                            total_price += int(item.price) * item_counts[i]
+                    # Buy X and get M percent off of Y amount
+                    elif campaign.campaign_y != 0:
+                        print("HO")
+                        if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+                            total_price += int(item.price) * \
+                                int(campaign.campaign_x)
+                            total_price += (int(item.price) * int(campaign.campaign_y)
+                                            ) * (1 - (int(campaign.campaign_y) / 100))
+
+                        else:
+                            total_price += int(item.price) * item_counts[i]
+                    # Percentage Discount
+                    else:
+                        print("HI")
+                        total_price += int(item.price) * item_counts[i]
+                        total_price *= ((100 -
+                                         int(campaign.campaign_amount)) / 100)
+
+            return round(total_price, 2)
         except Item.DoesNotExist:
             raise Http404
 
@@ -360,7 +398,7 @@ class ReviewDetail(APIView):
     def get_object(pk):
         try:
             return Review.objects.get(pk=pk)
-        except Item.DoesNotExist:
+        except Review.DoesNotExist:
             raise Http404
 
     def get(self, request, pk, format=None):
@@ -476,6 +514,7 @@ class RetrieveRatingFromComment(APIView):
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
+
 # 2-factor Authentication
 
 
@@ -510,3 +549,265 @@ class TOTPVerifyView(APIView):
                 device.save()
             return Response(True, status=status.HTTP_200_OK)
         return Response(status=status.HTTP_201_CREATED)
+
+
+class RecommendedProducts(APIView):
+
+    @staticmethod
+    def get_previous_purchase_categories(user_id):
+        orders = Order.objects.filter(buyer=user_id)
+
+        previous_purchase_categories = list()
+        for order in orders:
+            for item in order.items.all():
+                previous_purchase_categories.append(item.category)
+        return previous_purchase_categories
+
+    @staticmethod
+    def get_random_recommended_products(previous_purchase_categories):
+        frequency = {}
+        for item in previous_purchase_categories:
+            if item in frequency:
+                frequency[item] += 1
+            else:
+                frequency[item] = 1
+
+        counts = frequency.values()
+        normalized_counts = [float(i) / sum(counts) for i in counts]
+        chosen_category = np.random.choice(
+            list(frequency.keys()), p=normalized_counts)
+
+        all_from_chosen_category = Item.objects.filter(
+            category__iexact=chosen_category)
+        all_from_chosen_category = list(all_from_chosen_category)
+
+        return random.sample(all_from_chosen_category, 1)[0]
+
+    def post(self, request, recommendation_count, format=None):
+
+        user_id = request.user.pk
+        previous_purchase_categories = self.get_previous_purchase_categories(
+            user_id)
+
+        recommended_products = list()
+
+        for i in range(recommendation_count):
+            recommended_products.append(
+                self.get_random_recommended_products(previous_purchase_categories))
+
+        print(recommended_products)
+        recommended_product_ids = [
+            product.pk for product in recommended_products]
+
+        data = {'recommended_product_ids': recommended_product_ids}
+
+        return Response(data)
+
+#Charts and stats
+
+
+class StatisticDetail(APIView):
+    @staticmethod
+    def create_stats(in_data):
+
+        result = {}  # Holds stats
+        result[in_data['date'][0]] = []  # Create an empty entry for day one
+
+        # day by day sold item count
+        item_count_day = {}
+        daily_income = 0
+        for i, items in enumerate(in_data["items"]):
+            # Add every price to daily income
+            daily_income += in_data['total_price'][i]
+
+            # Once a day passes
+            if in_data['date'][i] not in result.keys():
+                # Sort the distionary by value
+                item_count_day = {k: v for k, v in sorted(
+                    item_count_day.items(), key=lambda item: item[1], reverse=True)}
+
+                # Add stats to days
+                result[in_data['date'][i - 1]].append(item_count_day)
+                result[in_data['date'][i - 1]].append(daily_income)
+
+                # Add an empty slot for a new day
+                result[in_data['date'][i]] = []
+
+                # Reset stats
+                item_count_day = {}
+                daily_income = 0
+
+            # Split orders by item and add up item counts
+            for j, item in enumerate(items):
+
+                # Create an entry for an item if not in dictionary
+                if item[0] not in item_count_day.keys():
+                    item_count_day[item[0]] = int(
+                        in_data['item_counts'][i].split(",")[j])
+
+                # Add how much it has been ordered in current order
+                else:
+                    item_count_day[item[0]
+                                   ] += int(in_data['item_counts'][i].split(",")[j])
+        # Sort the distionary by value
+                item_count_day = {k: v for k, v in sorted(
+                    item_count_day.items(), key=lambda item: item[1], reverse=True)}
+        # Add todays stats
+        result[in_data['date'][i]].append(item_count_day)
+        result[in_data['date'][i - 1]].append(daily_income)
+
+        # Refactor data
+        refactored_result = {
+            "last_5_total_revenue": {
+                "days": [],
+                "revenue": {
+                    "name": 'Total Revenue',
+                    "data": []
+                }
+            },
+            "top_5_sold_products_all_time": {
+                "products": [],
+                "counts": {
+                    "name": 'Total Sold Count',
+                    "data": []
+                }
+            },
+            "top_5_sold_products_all_time_shares": [],
+            "total_sold_product_counts_5_days": {
+                "days": [],
+                "revenue": {
+                    "name": "Total Sold Product Count",
+                    "data": []
+                }
+            }
+        }
+        all_sales = {}
+
+        for key in result.keys():
+            data = result[key]
+            refactored_result["last_5_total_revenue"]["days"].append(key)
+            refactored_result["total_sold_product_counts_5_days"]["days"].append(
+                key)
+            refactored_result["last_5_total_revenue"]["revenue"]["data"].append(
+                data[1])
+            refactored_result["total_sold_product_counts_5_days"]["revenue"]["data"].append(
+                sum(list(data[0].values())))
+
+            for item in data[0].keys():
+                if item not in all_sales.keys():
+                    all_sales[item] = int(data[0][item])
+                else:
+                    all_sales[item] += int(data[0][item])
+
+        all_sales = {k: v for k, v in sorted(
+            all_sales.items(), key=lambda item: item[1], reverse=True)}
+
+        top_5_sales = list(all_sales.values())[:5]
+        top_5_sale_product = [Item.objects.get(
+            pk=i).name for i in list(all_sales.keys())[:5]]
+
+        refactored_result["top_5_sold_products_all_time"]["products"] = top_5_sale_product
+        refactored_result["top_5_sold_products_all_time"]["counts"]["data"] = top_5_sales
+
+        top_5_sales_shares = [round(i / sum(top_5_sales), 2)
+                              for i in top_5_sales]
+        for item, share in zip(top_5_sale_product, top_5_sales_shares):
+            refactored_result["top_5_sold_products_all_time_shares"].append(
+                {
+                    "name": item,
+                    "share": share
+                }
+            )
+
+        return refactored_result
+
+    def get(self, request, format=None):
+        orders_in_frame = []  # Will store every order inside the given timeframe
+
+        # Only sales manager can access stats
+        if request.user.is_sales_manager:
+            # Get every order filter by date later
+            orders = Order.objects.all()
+            for order in orders:
+                orders_in_frame.append(order)
+
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        # Create a dictionary with orders inside the frame and their important
+        # attributes
+        result = {'id': [],
+                  'items': [],
+                  'item_counts': [],
+                  'total_price': [],
+                  'date': []}
+
+        for order in orders_in_frame:
+            for key in result.keys():
+                result[key].append(getattr(order, key))
+
+        # Swap item object references to names and ids and
+        # convert dates to string to return a response
+        items_ids = []
+        date_strs = []
+        for item, temp_date in zip(result['items'], result['date']):
+            temp_item = [(j.id, j.name) for j in item.all()]
+            date_strs.append(str(temp_date))
+            items_ids.append(temp_item)
+        result['items'] = items_ids
+        result['date'] = date_strs
+
+        # Example date: "2021-05-21"
+        # For every date 0th index is day by day sold item count
+        # For every date 1st index is day by day revenue
+        # Item counts are sorted so top X can be obtained
+        data = self.create_stats(result)
+
+        return Response(data)
+
+# Campaign
+
+
+class CampaignDetail(APIView):
+
+    @staticmethod
+    def get_object(pk):
+        try:
+            return Campaign.objects.get(pk=pk)
+        except Campaign.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, uuid, format=None):
+        if request.user.is_sales_manager:
+            Campaign.objects.get(id=uuid).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    def get(self, request, uuid, format=None):
+        if request.user.is_sales_manager:
+            campaign = self.get_object(uuid)
+            serializer = CampaignSerializer(campaign)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class CampaignList(APIView):
+    def get(self, request, format=None):
+        if request.user.is_sales_manager:
+            item = Campaign.objects.all()
+            serializer = CampaignSerializer(item, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    def post(self, request, format=None):
+        if request.user.is_sales_manager:
+            serializer = CampaignSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item, User, Category, Order, Review
+from .models import Item, User, Category, Order, Review, Campaign
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -24,7 +24,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             first_name=self.validated_data['first_name'],
             last_name=self.validated_data['last_name'],
             is_sales_manager=self.validated_data['is_sales_manager'],
-            is_product_manager=self.validated_data['is_product_manager'],
+            is_product_manager=self.validated_data['is_product_manager']
+
         )
 
         password = self.validated_data['password']
@@ -42,7 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'phone_number', 'first_name', 'last_name', 'addresses', 'is_sales_manager',
-                  'is_product_manager', 'is_admin']
+                  'is_product_manager', 'is_admin', 'twoFA_enabled']
 
 
 class ItemSerializer(serializers.ModelSerializer):
@@ -93,3 +94,15 @@ class ReviewSerializer(serializers.ModelSerializer):
                   'user',
                   'item',
                   'status']
+
+# Campaign
+
+
+class CampaignSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campaign
+        fields = ['id',
+                  'valid_until',
+                  'campaign_x',
+                  'campaign_y',
+                  'campaign_amount']
