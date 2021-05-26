@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item, User, Category, Order, Review, Campaign
+from .models import Item, User, Category, Order, Review, Campaign, Advertisement
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -95,6 +95,7 @@ class ReviewSerializer(serializers.ModelSerializer):
                   'item',
                   'status']
 
+
 # Campaign
 
 
@@ -106,3 +107,9 @@ class CampaignSerializer(serializers.ModelSerializer):
                   'campaign_x',
                   'campaign_y',
                   'campaign_amount']
+
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Advertisement
+        fields = ['category', 'image']

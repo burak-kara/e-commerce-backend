@@ -74,6 +74,7 @@ class User(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return True
 
+
 # Campaign
 
 
@@ -85,7 +86,7 @@ class Campaign(models.Model):
     campaign_amount = models.IntegerField(default=0)
 
     def __str__(self):
-        return "campaign_buy_" + str(self.campaign_x) + "_get_"+str(self.campaign_y) + "_"+str(self.campaign_amount)
+        return "campaign_buy_" + str(self.campaign_x) + "_get_" + str(self.campaign_y) + "_" + str(self.campaign_amount)
 
 
 class Item(models.Model):
@@ -118,7 +119,7 @@ class Order(models.Model):
     buyer = models.ForeignKey(User, on_delete=models.CASCADE)
     items = models.ManyToManyField(Item)
     item_counts = models.CharField(max_length=600, validators=[
-                                   validators.int_list_validator()])
+        validators.int_list_validator()])
     total_price = models.FloatField(default=0.0)
     date = models.DateField(verbose_name='order_date', auto_now_add=True)
     delivery_address = models.CharField(
@@ -169,3 +170,11 @@ class Review(models.Model):
 
     def __str__(self):
         return "rev_id_" + str(self.id)
+
+
+class Advertisement(models.Model):
+    category = models.CharField(max_length=100, default='Other')
+    image = models.CharField(max_length=1000, default='#')
+
+    def __str__(self):
+        return self.category + "_advertisement"
