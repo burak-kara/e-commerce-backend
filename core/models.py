@@ -1,9 +1,7 @@
 from django.db import models
 from django.core import validators
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
-from web3 import Web3, HTTPProvider
-import json
-from web3.middleware import geth_poa_middleware
+import uuid
 
 private_key_master = '95b3eb7b43f5352ad277b7260438ed8f13ab14deaa9c5eee77352cea1a4ce0d6'
 public_key_master = ''
@@ -122,6 +120,19 @@ class User(AbstractBaseUser):
     def has_module_perms(self, app_label):
         return True
 
+# Campaign
+
+
+class Campaign(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    valid_until = models.DateTimeField()
+    campaign_x = models.IntegerField(default=1)
+    campaign_y = models.IntegerField(default=0)
+    campaign_amount = models.IntegerField(default=0)
+
+    def __str__(self):
+        return "campaign_buy_" + str(self.campaign_x) + "_get_"+str(self.campaign_y) + "_"+str(self.campaign_amount)
+
 
 class Item(models.Model):
     name = models.CharField(max_length=200, default='')
@@ -135,7 +146,7 @@ class Item(models.Model):
     mean_rating = models.IntegerField(default=None,
                                       validators=[validators.MaxValueValidator(5), validators.MinValueValidator(0)])
     review_count = models.IntegerField(default=0)
-    campaign = models.CharField(max_length=200, blank=True, default='')
+    campaign = models.ManyToManyField(Campaign, blank=True)
     seller = models.ForeignKey(User, on_delete=models.CASCADE, default=2)
 
     def __str__(self):
@@ -154,7 +165,7 @@ class Order(models.Model):
     items = models.ManyToManyField(Item)
     item_counts = models.CharField(max_length=600, validators=[
                                    validators.int_list_validator()])
-    total_price = models.IntegerField(default=0)
+    total_price = models.FloatField(default=0.0)
     date = models.DateField(verbose_name='order_date', auto_now_add=True)
     delivery_address = models.CharField(
         max_length=1000, default='Self Pick Up')
