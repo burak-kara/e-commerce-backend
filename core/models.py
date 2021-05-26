@@ -1,10 +1,11 @@
 from django.db import models
 from django.core import validators
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.conf import settings
 import uuid
 
-private_key_master = '95b3eb7b43f5352ad277b7260438ed8f13ab14deaa9c5eee77352cea1a4ce0d6'
-public_key_master = ''
+private_key_master = settings.PRIVATE_KEY
+public_key_master = '0xB78DFDdF8af06485b5358ad98950119F6f270AE4'
 
 contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
 
@@ -25,8 +26,6 @@ class CustomUserManager(BaseUserManager):
         pub_key,pvt_key = self.create_wallet()    
         wallet_address = pub_key
         private_wallet_address = pvt_key
-        print(wallet_address)
-        print(private_wallet_address)
         user = self.model(
             username=username,
             email=self.normalize_email(email),
