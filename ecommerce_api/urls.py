@@ -46,6 +46,10 @@ urlpatterns = [
     # Statistics
     path('api/stats/', views.StatisticDetail.as_view()),
 
+    # Campaign
+    path('api/campaign/<str:uuid>/', views.CampaignDetail.as_view()),
+    path('api/campaign/', views.CampaignList.as_view()),
+
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

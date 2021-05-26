@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item, User, Category, Order, Review
+from .models import Item, User, Category, Order, Review, Campaign
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -94,3 +94,15 @@ class ReviewSerializer(serializers.ModelSerializer):
                   'user',
                   'item',
                   'status']
+
+# Campaign
+
+
+class CampaignSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campaign
+        fields = ['id',
+                  'valid_until',
+                  'campaign_x',
+                  'campaign_y',
+                  'campaign_amount']

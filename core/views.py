@@ -17,14 +17,16 @@ from django.views.generic.base import TemplateResponseMixin, TemplateView, View
 from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from django.core.mail import send_mail
-from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer
-from .models import Item, User, Category, Order, Review
+from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, CampaignSerializer
+from .models import Item, User, Category, Order, Review, Campaign
 from rest_framework import permissions
 from django_otp import devices_for_user
 from django_otp.plugins.otp_totp.models import TOTPDevice
 # Stats
 from datetime import date
 import json
+# Campaigns
+from rest_framework.exceptions import ValidationError
 
 nltk.download('vader_lexicon')
 
@@ -186,9 +188,40 @@ class OrderList(APIView):
         try:
             total_price = 0
             for i, pk in enumerate(items):
+
                 item = Item.objects.get(pk=pk)
-                total_price += int(item.price) * item_counts[i]
-            return total_price
+                campaigns = item.campaign.all()
+
+                for campaign in campaigns:
+                    # Buy X get Y free
+                    if int(campaign.campaign_amount) == 0:
+                        print("HA")
+                        if item_counts[i] % int(campaign.campaign_x) == 0:
+                            total_price += int(item.price) * item_counts[i]
+                            total_price *= 1 - \
+                                ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                                  ) / int(campaign.campaign_x))
+                        else:
+                            total_price += int(item.price) * item_counts[i]
+                    # Buy X and get M percent off of Y amount
+                    elif campaign.campaign_y != 0:
+                        print("HO")
+                        if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+                            total_price += int(item.price) * \
+                                int(campaign.campaign_x)
+                            total_price += (int(item.price) * int(campaign.campaign_y)
+                                            ) * (1 - (int(campaign.campaign_y) / 100))
+
+                        else:
+                            total_price += int(item.price) * item_counts[i]
+                    # Percentage Discount
+                    else:
+                        print("HI")
+                        total_price += int(item.price) * item_counts[i]
+                        total_price *= ((100 -
+                                         int(campaign.campaign_amount)) / 100)
+
+            return round(total_price, 2)
         except Item.DoesNotExist:
             raise Http404
 
@@ -731,3 +764,50 @@ class StatisticDetail(APIView):
         data = self.create_stats(result)
 
         return Response(data)
+
+# Campaign
+
+
+class CampaignDetail(APIView):
+
+    @staticmethod
+    def get_object(pk):
+        try:
+            return Campaign.objects.get(pk=pk)
+        except Campaign.DoesNotExist:
+            raise Http404
+
+    def delete(self, request, uuid, format=None):
+        if request.user.is_sales_manager:
+            Campaign.objects.get(id=uuid).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    def get(self, request, uuid, format=None):
+        if request.user.is_sales_manager:
+            campaign = self.get_object(uuid)
+            serializer = CampaignSerializer(campaign)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class CampaignList(APIView):
+    def get(self, request, format=None):
+        if request.user.is_sales_manager:
+            item = Campaign.objects.all()
+            serializer = CampaignSerializer(item, many=True)
+            return Response(serializer.data)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+    def post(self, request, format=None):
+        if request.user.is_sales_manager:
+            serializer = CampaignSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
