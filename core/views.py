@@ -22,6 +22,7 @@ from .serializers import ItemSerializer, CategorySerializer, UserSerializer, Ord
 from rest_framework import permissions
 from django_otp import devices_for_user
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from django.conf import settings
 # Stats
 from datetime import date
 from web3 import Web3, HTTPProvider
@@ -30,7 +31,7 @@ import json
 # Campaigns
 from rest_framework.exceptions import ValidationError
 
-private_key_master = '95b3eb7b43f5352ad277b7260438ed8f13ab14deaa9c5eee77352cea1a4ce0d6'
+private_key_master = settings.PRIVATE_KEY
 public_key_master = '0xB78DFDdF8af06485b5358ad98950119F6f270AE4'
 
 contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
@@ -41,7 +42,7 @@ def initialize_chain_connection():
     return w3
 
 w3 = initialize_chain_connection()
-contract_abi_directory = 'D:/Agile/development/static/blockchain/contract_abi.json'
+contract_abi_directory = '/static/blockchain/contract_abi.json'
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
 contract = w3.eth.contract(address =contract_address , abi =temp_abi)
@@ -72,7 +73,6 @@ class UserDetail(APIView):
 
     def put(self, request, format=None):
         user = request.user
-        print('error')
         serializer = UserSerializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -83,7 +83,7 @@ class UserDetail(APIView):
 class Funding(APIView):
     def get (self,request, format=None):
         user = request.user
-        serializer = WalletSerializer(user)#, data=request.data)
+        serializer = WalletSerializer(user)
         return Response(serializer.data)
 
     def post(self, request, format=None):
@@ -92,27 +92,20 @@ class Funding(APIView):
         total_supply = contract.functions.balanceOf(public_key_master).call()
         if amt <= total_supply:
             user_email = request.user.email
-            print("LUL")
-            x=User.objects.get(email=user_email)
+            user_obj=User.objects.get(email=user_email)
             wallet_address = x.wallet_address
             amount = amt
             transaction_id=self.transfer_tokens(amount,wallet_address)
-            print(transaction_id)
-            userName = x.username
+            userName = user_obj.username
             new_balance = self.update_balance(userName)
-            print('break2')
-            # serializer = WalletSerializer(data=request.data)
             updated_data = {'balance':new_balance,
-            'username':x.username,
-            'first_name':x.first_name, 
-            'last_name':x.last_name,
-            'wallet_address':x.wallet_address,
-            'private_wallet_address':x.private_wallet_address}
-            serializer = WalletSerializer(x, data=updated_data)
-            print(type(serializer))
-            print('break3')
+            'username':user_obj.username,
+            'first_name':user_obj.first_name, 
+            'last_name':user_obj.last_name,
+            'wallet_address':user_obj.wallet_address,
+            'private_wallet_address':user_obj.private_wallet_address}
+            serializer = WalletSerializer(user_obj, data=updated_data)
             if serializer.is_valid():
-                print('break4')
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -121,7 +114,6 @@ class Funding(APIView):
 
     @staticmethod
     def pay(recipient_address, amount, payee_address=public_key_master):
-        private_key_master = '95b3eb7b43f5352ad277b7260438ed8f13ab14deaa9c5eee77352cea1a4ce0d6'
         w3 = initialize_chain_connection()
         txn = contract.functions.transfer(recipient, amount).buildTransaction({'from':payee_address,
           'nonce':w3.eth.getTransactionCount(payee_address) })
@@ -132,24 +124,18 @@ class Funding(APIView):
 
     @staticmethod
     def transfer_tokens(amount,recipient_address):
-        amount = amount
-        transactionID = pay(recipient_address, amount)
-        return transactionID
-        # try:
-        #     amount = amount
-        #     # recipient_address = wallet_address
-        #     transactionID = self.pay(recipient_address, amount)
-        #     return transactionID
-        # except:
-        #     raise Http404
+        try:
+            amount = amount
+            transactionID = pay(recipient_address, amount)
+            return transactionID
+        except:
+            raise Http404
 
     @staticmethod
     def update_balance(userName):
         try:
-            # user = userName
             recipient = User.objects.get(username=userName)
             new_balance = contract.functions.balanceOf(recipient.wallet_address).call()
-            print(new_balance)
             recipient.balance = new_balance
             return new_balance
         except User.DoesNotExist:
@@ -172,8 +158,8 @@ class AddressDetail(APIView):
 class GetAllUsers(APIView):
 
     def get(self, request, format=None):
-        lul = User.objects.all().filter(is_admin=False).filter(is_superuser=False)
-        allUsersSerializer = UserSelectSerializer(lul,many=True)
+        filered_user_objects = User.objects.all().filter(is_admin=False).filter(is_superuser=False)
+        allUsersSerializer = UserSelectSerializer(filered_user_objects,many=True)
         return Response(allUsersSerializer.data)
 
 class updateUserSalesMgr(APIView):
@@ -183,7 +169,6 @@ class updateUserSalesMgr(APIView):
         try:
             return User.objects.get(username=username)
         except User.DoesNotExist:
-            print('wtf')
             raise Http404
 
     def get(self, request, format=None):
@@ -192,19 +177,16 @@ class updateUserSalesMgr(APIView):
         print(selected_user)
         UserSelectSerializer = UserSalesMgrSerializer(selected_user)
         return Response(UserSelectSerializer.data)
-        # return Response(status=status.HTTP_200_OK)
 
     def put(self, request, format=None):
         username = request.data.get("username")
         selected_user = self.get_user(username)
         if selected_user.is_sales_manager !=0:
-            # selected_user.is_sales_manager='False'
             modified_privilege = {'username':selected_user.username,
               'first_name':selected_user.first_name, 
               'last_name':selected_user.last_name,
               'is_sales_manager': False}
         else:
-            # selected_user.is_sales_manager='True'
             modified_privilege  = {'username':selected_user.username,
               'first_name':selected_user.first_name, 
               'last_name':selected_user.last_name,
@@ -230,7 +212,6 @@ class updateUserProductMgr(APIView):
         selected_user = self.get_user(username)
         UserSelectSerializer = UserProductMgrSerializer(selected_user)
         return Response(UserSelectSerializer.data)
-        # return Response(status=status.HTTP_200_OK)
 
     def put(self, request, format=None):
         username = request.data.get("username")
