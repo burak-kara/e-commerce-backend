@@ -43,9 +43,6 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, email, phone_number, first_name, last_name, password=None):
-        pub_key,pvt_key = self.create_wallet()    
-        wallet_address = pub_key
-        private_wallet_address = pvt_key
         user = self.create_user(
             username=username,
             email=self.normalize_email(email),
