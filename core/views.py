@@ -17,7 +17,7 @@ from django.views.generic.base import TemplateResponseMixin, TemplateView, View
 from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from django.core.mail import send_mail
-from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, WalletSerializer, UserSelectSerializer, UserProductMgrSerializer, UserSalesMgrSerializer
+from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, CampaignSerializer, WalletSerializer, UserSelectSerializer, UserProductMgrSerializer, UserSalesMgrSerializer
 from .models import Item, User, Category, Order, Review
 from rest_framework import permissions
 from django_otp import devices_for_user
