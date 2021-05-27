@@ -874,7 +874,7 @@ class RecommendedAdds(APIView):
         user_id = request.user.pk
 
         if len(Order.objects.filter(buyer=user_id)) <= 0:
-            return Response({})
+            return Response({'img': random.sample(list(Advertisement.objects.all()), 1)[0].image})
 
         previous_purchase_categories = self.get_previous_purchase_categories(
             user_id)
