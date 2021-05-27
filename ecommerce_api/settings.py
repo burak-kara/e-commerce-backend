@@ -136,6 +136,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, '../static')
 
+#Private key 
+PRIVATE_KEY = '95b3eb7b43f5352ad277b7260438ed8f13ab14deaa9c5eee77352cea1a4ce0d6'
+
 # 2fa configs
 #LOGIN_URL = '/sign-in/'
 
