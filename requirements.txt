@@ -53,7 +53,6 @@ pymongo==3.11.3
 pyrsistent==0.17.3
 python3-openid==3.2.0
 pytz==2021.1
-pywin32==300
 qrcode==6.1
 regex==2021.4.4
 requests==2.25.1
@@ -70,5 +69,4 @@ varint==1.0.2
 web3==5.19.0
 websockets==8.1
 whitenoise==5.2.0
-win32-setctime==1.0.3
 zipp==3.4.1
