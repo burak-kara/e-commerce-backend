@@ -17,8 +17,9 @@ from django.views.generic.base import TemplateResponseMixin, TemplateView, View
 from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from django.core.mail import send_mail
-from .models import Item, User, Category, Order, Review, Campaign
-from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, CampaignSerializer, WalletSerializer, UserSelectSerializer, UserProductMgrSerializer, UserSalesMgrSerializer
+from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, \
+    CampaignSerializer, AdvertisementSerializer
+from .models import Item, User, Category, Order, Review, Campaign, Advertisement
 from rest_framework import permissions
 from django_otp import devices_for_user
 from django_otp.plugins.otp_totp.models import TOTPDevice
@@ -392,8 +393,8 @@ class OrderList(APIView):
                         if item_counts[i] % int(campaign.campaign_x) == 0:
                             total_price += int(item.price) * item_counts[i]
                             total_price *= 1 - \
-                                ((int(campaign.campaign_x) - int(campaign.campaign_y)
-                                  ) / int(campaign.campaign_x))
+                                           ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                                             ) / int(campaign.campaign_x))
                         else:
                             total_price += int(item.price) * item_counts[i]
                     # Buy X and get M percent off of Y amount
@@ -401,7 +402,7 @@ class OrderList(APIView):
                         print("HO")
                         if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
                             total_price += int(item.price) * \
-                                int(campaign.campaign_x)
+                                           int(campaign.campaign_x)
                             total_price += (int(item.price) * int(campaign.campaign_y)
                                             ) * (1 - (int(campaign.campaign_y) / 100))
 
@@ -831,6 +832,10 @@ class RecommendedProducts(APIView):
     def post(self, request, recommendation_count, format=None):
 
         user_id = request.user.pk
+
+        if len(Order.objects.filter(buyer=user_id)) <= 0:
+            return Response({})
+
         previous_purchase_categories = self.get_previous_purchase_categories(
             user_id)
 
@@ -840,7 +845,6 @@ class RecommendedProducts(APIView):
             recommended_products.append(
                 self.get_random_recommended_products(previous_purchase_categories))
 
-        print(recommended_products)
         recommended_product_ids = [
             product.pk for product in recommended_products]
 
@@ -848,7 +852,8 @@ class RecommendedProducts(APIView):
 
         return Response(data)
 
-#Charts and stats
+
+# Charts and stats
 
 
 class StatisticDetail(APIView):
@@ -893,8 +898,8 @@ class StatisticDetail(APIView):
                 # Add how much it has been ordered in current order
                 else:
                     item_count_day[item[0]
-                                   ] += int(in_data['item_counts'][i].split(",")[j])
-        # Sort the distionary by value
+                    ] += int(in_data['item_counts'][i].split(",")[j])
+                # Sort the distionary by value
                 item_count_day = {k: v for k, v in sorted(
                     item_count_day.items(), key=lambda item: item[1], reverse=True)}
         # Add todays stats
@@ -1010,6 +1015,7 @@ class StatisticDetail(APIView):
 
         return Response(data)
 
+
 # Campaign
 
 
@@ -1056,3 +1062,70 @@ class CampaignList(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class AdvertisementList(APIView):
+    """
+    List all advertisements, or create a new advertisement.
+    """
+
+    def get(self, request, format=None):
+        advertisement = Advertisement.objects.all()
+        serializer = AdvertisementSerializer(advertisement, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = AdvertisementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RecommendedAdds(APIView):
+
+    @staticmethod
+    def get_previous_purchase_categories(user_id):
+        orders = Order.objects.filter(buyer=user_id)
+
+        previous_purchase_categories = list()
+        for order in orders:
+            for item in order.items.all():
+                previous_purchase_categories.append(item.category)
+        return previous_purchase_categories
+
+    @staticmethod
+    def get_random_recommended_advertisement(previous_purchase_categories):
+        frequency = {}
+        for item in previous_purchase_categories:
+            if item in frequency:
+                frequency[item] += 1
+            else:
+                frequency[item] = 1
+
+        counts = frequency.values()
+        normalized_counts = [float(i) / sum(counts) for i in counts]
+        chosen_category = np.random.choice(
+            list(frequency.keys()), p=normalized_counts)
+
+        all_from_chosen_category = Advertisement.objects.filter(
+            category__iexact=chosen_category)
+        all_from_chosen_category = list(all_from_chosen_category)
+
+        return random.sample(all_from_chosen_category, 1)[0]
+
+    def post(self, request, format=None):
+
+        user_id = request.user.pk
+
+        if len(Order.objects.filter(buyer=user_id)) <= 0:
+            return Response({})
+
+        previous_purchase_categories = self.get_previous_purchase_categories(
+            user_id)
+
+        advertisement = self.get_random_recommended_advertisement(previous_purchase_categories)
+
+        data = {'img': advertisement.image}
+
+        return Response(data)
