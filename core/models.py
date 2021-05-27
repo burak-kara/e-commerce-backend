@@ -1,12 +1,32 @@
 from django.db import models
 from django.core import validators
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.conf import settings
 import uuid
+from web3 import Web3, HTTPProvider
+from web3.middleware import geth_poa_middleware
+import json
 
+private_key_master = settings.PRIVATE_KEY
+public_key_master = '0xB78DFDdF8af06485b5358ad98950119F6f270AE4'
+
+contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
+
+def initialize_chain_connection():
+    w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/")) # "1-s2 provider has the most uptime" - Emir
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0) # might cause errors lul 
+    return w3
+
+w3 = initialize_chain_connection()
+# contract_abi_directory = '/static/blockchain/contract_abi.json'
+contract_abi_directory = 'D:/Agile/Development/static/blockchain/contract_abi.json'
+f = open(contract_abi_directory)
+temp_abi = json.load(f)
+contract = w3.eth.contract(address =contract_address , abi =temp_abi)
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,
-                    password=None):
+
+    def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,password=None):
         user = self.model(
             username=username,
             email=self.normalize_email(email),
@@ -14,9 +34,8 @@ class CustomUserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             is_sales_manager=is_sales_manager,
-            is_product_manager=is_product_manager
-        )
-
+            is_product_manager=is_product_manager,
+            )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -29,14 +48,14 @@ class CustomUserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             is_sales_manager=True,
-            is_product_manager=True
+            is_product_manager=True,
         )
-
         user.is_staff = True
         user.is_admin = True
         user.is_superuser = True
         user.set_password(password)
         user.save(using=self._db)
+
         return user
 
 
@@ -47,7 +66,6 @@ class User(AbstractBaseUser):
     first_name = models.CharField(verbose_name='first_name', max_length=30)
     last_name = models.CharField(verbose_name='last_name', max_length=30)
     addresses = models.CharField(max_length=1200, blank=True)
-    wallet_address = models.CharField(max_length=400)
     date_joined = models.DateField(
         verbose_name='date joined', auto_now_add=True)
     last_login = models.DateField(verbose_name='last login', auto_now=True)
@@ -58,6 +76,10 @@ class User(AbstractBaseUser):
     is_product_manager = models.BooleanField(default=False)
     is_sales_manager = models.BooleanField(default=False)
     twoFA_enabled = models.BooleanField(default=False)
+    balance = models.DecimalField(max_digits=11, decimal_places=5, default=0.0)
+    wallet_address = models.CharField(max_length=200)
+    private_wallet_address = models.CharField(max_length=200)
+
 
     USERNAME_FIELD = 'username'
 
