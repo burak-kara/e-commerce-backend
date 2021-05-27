@@ -87,7 +87,6 @@ class Funding(APIView):
         pk = request.user.pk
         user_obj=User.objects.get(pk=pk)
         queried_balance = self.update_balance(user_obj)
-        print(queried_balance)
         updated_data = {'balance':queried_balance,
             'username':user_obj.username,
             'first_name':user_obj.first_name, 
@@ -186,7 +185,6 @@ class updateUserSalesMgr(APIView):
     def get(self, request, format=None):
         username = request.data.get("username")
         selected_user = self.get_user(username)
-        print(selected_user)
         UserSelectSerializer = UserSalesMgrSerializer(selected_user)
         return Response(UserSelectSerializer.data)
 
@@ -204,7 +202,6 @@ class updateUserSalesMgr(APIView):
               'last_name':selected_user.last_name,
               'is_sales_manager': True}
         serializer = UserSalesMgrSerializer(selected_user, data=modified_privilege)
-        print('before is valid')
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -388,7 +385,6 @@ class OrderList(APIView):
                 for campaign in campaigns:
                     # Buy X get Y free
                     if int(campaign.campaign_amount) == 0:
-                        print("HA")
                         if item_counts[i] % int(campaign.campaign_x) == 0:
                             total_price += int(item.price) * item_counts[i]
                             total_price *= 1 - \
@@ -398,7 +394,6 @@ class OrderList(APIView):
                             total_price += int(item.price) * item_counts[i]
                     # Buy X and get M percent off of Y amount
                     elif campaign.campaign_y != 0:
-                        print("HO")
                         if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
                             total_price += int(item.price) * \
                                            int(campaign.campaign_x)
@@ -409,7 +404,6 @@ class OrderList(APIView):
                             total_price += int(item.price) * item_counts[i]
                     # Percentage Discount
                     else:
-                        print("HI")
                         total_price += int(item.price) * item_counts[i]
                         total_price *= ((100 -
                                          int(campaign.campaign_amount)) / 100)
@@ -468,9 +462,7 @@ class OrderList(APIView):
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
         if buyer_balance >= float(total_price):
             transaction_id = self.customer_pay(total_price,user_obj)
-            print(transaction_id)
             new_balance = self.check_customer_balance(buyer_wallet)
-            print(new_balance)
             updated_data = {'balance':new_balance,
             'username':user_obj.username,
             'first_name':user_obj.first_name, 
@@ -483,7 +475,6 @@ class OrderList(APIView):
                 serializer.save()
                 mail_body = self.email_body(
                     items, item_counts, total_price, request.data['delivery_address'])
-                # print(mail_body)
                 send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
                           mail_body,
                           recipient_list=[request.user.email],
