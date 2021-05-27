@@ -50,8 +50,11 @@ urlpatterns = [
     path('api/funding/<int:amount>/', views.Funding.as_view()),
     # get all users
     path('api/getAll/', views.GetAllUsers.as_view()),
-    path('api/updateSales/', views.updateUserSalesMgr.as_view()),
-    path('api/updateProduct/', views.updateUserProductMgr.as_view()),
+    # user status update
+    path('api/admin-user-update/<int:pk>/', views.updateUserMgrChange.as_view()),
+    #intervals - COMING SOON  
+
+
     
     # Statistics
     path('api/stats/', views.StatisticDetail.as_view()),

@@ -18,7 +18,7 @@ from allauth.account.adapter import get_adapter
 from django.shortcuts import redirect
 from django.core.mail import send_mail
 from .serializers import ItemSerializer, CategorySerializer, UserSerializer, OrderSerializer, ReviewSerializer, \
-    CampaignSerializer, AdvertisementSerializer
+    CampaignSerializer, AdvertisementSerializer, UserPrivilegeSerializer, WalletSerializer, UserSelectSerializer
 from .models import Item, User, Category, Order, Review, Campaign, Advertisement
 from rest_framework import permissions
 from django_otp import devices_for_user
@@ -45,6 +45,7 @@ def initialize_chain_connection():
 
 w3 = initialize_chain_connection()
 contract_abi_directory = '/static/blockchain/contract_abi.json'
+
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
 contract = w3.eth.contract(address =contract_address , abi =temp_abi)
@@ -174,80 +175,37 @@ class GetAllUsers(APIView):
         allUsersSerializer = UserSelectSerializer(filered_user_objects,many=True)
         return Response(allUsersSerializer.data)
 
-class updateUserSalesMgr(APIView):
+class updateUserMgrChange(APIView):
 
     @staticmethod
-    def get_user(username):
+    def get_user(pk):
         try:
-            return User.objects.get(username=username)
+            print("trying")
+            return User.objects.get(pk=pk)
         except User.DoesNotExist:
             raise Http404
 
-    def get(self, request, format=None):
-        username = request.data.get("username")
-        selected_user = self.get_user(username)
+    def get(self, request, pk):
+        print("in get")
+        selected_user = self.get_user(pk)
+        # username = request.data.get("username")
+        # selected_user = self.get_user(username)
         print(selected_user)
         UserSelectSerializer = UserSalesMgrSerializer(selected_user)
         return Response(UserSelectSerializer.data)
 
-    def put(self, request, format=None):
-        username = request.data.get("username")
-        selected_user = self.get_user(username)
-        if selected_user.is_sales_manager !=0:
-            modified_privilege = {'username':selected_user.username,
-              'first_name':selected_user.first_name, 
-              'last_name':selected_user.last_name,
-              'is_sales_manager': False}
-        else:
-            modified_privilege  = {'username':selected_user.username,
-              'first_name':selected_user.first_name, 
-              'last_name':selected_user.last_name,
-              'is_sales_manager': True}
-        serializer = UserSalesMgrSerializer(selected_user, data=modified_privilege)
-        print('before is valid')
+    def put(self, request, pk):
+        is_sales_mgr = request.data.get("is_sales_manager")
+        is_product_mgr = request.data.get("is_product_manager")
+        selected_user = self.get_user(pk)
+        modified_privilege = {'username':selected_user.username,
+        'is_sales_manager': is_sales_mgr,
+        'is_product_manager':is_product_mgr}
+        serializer = UserPrivilegeSerializer(selected_user, data=modified_privilege)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class updateUserProductMgr(APIView):
-
-    @staticmethod
-    def get_user(username):
-        try:
-            return User.objects.get(username=username)
-        except User.DoesNotExist:
-            raise Http404
-
-    def get(self, request, format=None):
-        username = request.data.get("username")
-        selected_user = self.get_user(username)
-        UserSelectSerializer = UserProductMgrSerializer(selected_user)
-        return Response(UserSelectSerializer.data)
-
-    def put(self, request, format=None):
-        username = request.data.get("username")
-        selected_user = self.get_user(username)
-        if selected_user.is_product_manager !=0:
-            modified_privilege = {'username':selected_user.username,
-              'first_name':selected_user.first_name, 
-              'last_name':selected_user.last_name,
-              'is_product_manager': False}
-        else:
-            modified_privilege  = {'username':selected_user.username,
-              'first_name':selected_user.first_name, 
-              'last_name':selected_user.last_name,
-              'is_product_manager': True}
-        serializer = UserProductMgrSerializer(selected_user, data=modified_privilege)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-
 
 
 class ItemList(APIView):
@@ -483,7 +441,6 @@ class OrderList(APIView):
                 serializer.save()
                 mail_body = self.email_body(
                     items, item_counts, total_price, request.data['delivery_address'])
-                # print(mail_body)
                 send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
                           mail_body,
                           recipient_list=[request.user.email],

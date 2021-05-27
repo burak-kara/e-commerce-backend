@@ -51,38 +51,26 @@ class UserSerializer(serializers.ModelSerializer):
                   'is_admin',
                   'twoFA_enabled',
                   'balance',
-                  'wallet_address', 
-                  'private_wallet_address']
+                  'wallet_address',
+                  ]
 
 class UserSelectSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username', 
-                  'first_name', 
-                  'last_name', 
+        fields = ['username',  
                   'is_sales_manager',
-                  'is_product_manager', 
-                  'is_admin',
-                  'is_superuser'
+                  'is_product_manager',
                   ]
                   
-class UserSalesMgrSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = User
-    fields = ['username',
-              'first_name', 
-              'last_name', 
-              'is_sales_manager',
-              ]
-              
-class UserProductMgrSerializer(serializers.ModelSerializer):
+class UserPrivilegeSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
     fields = ['username', 
-              'first_name', 
-              'last_name', 
+              'is_sales_manager',
               'is_product_manager',
               ]
+              
+
 
 class WalletSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,8 +79,8 @@ class WalletSerializer(serializers.ModelSerializer):
                   'first_name', 
                   'last_name',
                   'balance', 
-                  'wallet_address', 
-                  'private_wallet_address']
+                  'wallet_address',
+                  ]
 
 
 class ItemSerializer(serializers.ModelSerializer):
