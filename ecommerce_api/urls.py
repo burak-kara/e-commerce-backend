@@ -49,7 +49,7 @@ urlpatterns = [
     # get all users
     path('api/getAll/', views.GetAllUsers.as_view()),
     path('api/updateSales/', views.updateUserSalesMgr.as_view()),
-    path('api/updateProduct/', views.updateUserProductMgr.as_view())
+    path('api/updateProduct/', views.updateUserProductMgr.as_view()),
     
     # Statistics
     path('api/stats/', views.StatisticDetail.as_view()),

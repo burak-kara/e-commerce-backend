@@ -3,6 +3,9 @@ from django.core import validators
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.conf import settings
 import uuid
+from web3 import Web3, HTTPProvider
+from web3.middleware import geth_poa_middleware
+import json
 
 private_key_master = settings.PRIVATE_KEY
 public_key_master = '0xB78DFDdF8af06485b5358ad98950119F6f270AE4'
@@ -15,17 +18,15 @@ def initialize_chain_connection():
     return w3
 
 w3 = initialize_chain_connection()
-contract_abi_directory = '/static/blockchain/contract_abi.json'
+# contract_abi_directory = '/static/blockchain/contract_abi.json'
+contract_abi_directory = 'D:/Agile/Development/static/blockchain/contract_abi.json'
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
 contract = w3.eth.contract(address =contract_address , abi =temp_abi)
 
 class CustomUserManager(BaseUserManager):
 
-    def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,private_wallet_address=None,wallet_address=None,password=None):
-        pub_key,pvt_key = self.create_wallet()    
-        wallet_address = pub_key
-        private_wallet_address = pvt_key
+    def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,password=None):
         user = self.model(
             username=username,
             email=self.normalize_email(email),
@@ -34,8 +35,6 @@ class CustomUserManager(BaseUserManager):
             last_name=last_name,
             is_sales_manager=is_sales_manager,
             is_product_manager=is_product_manager,
-            wallet_address = wallet_address,
-            private_wallet_address= private_wallet_address
             )
         user.set_password(password)
         user.save(using=self._db)
