@@ -179,17 +179,12 @@ class updateUserMgrChange(APIView):
     @staticmethod
     def get_user(pk):
         try:
-            print("trying")
             return User.objects.get(pk=pk)
         except User.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
-        print("in get")
         selected_user = self.get_user(pk)
-        # username = request.data.get("username")
-        # selected_user = self.get_user(username)
-        print(selected_user)
         UserSelectSerializer = UserSalesMgrSerializer(selected_user)
         return Response(UserSelectSerializer.data)
 
