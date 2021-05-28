@@ -57,7 +57,9 @@ class UserSerializer(serializers.ModelSerializer):
 class UserSelectSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username',  
+        fields = ['username',
+                  'first_name',
+                  'last_name',  
                   'is_sales_manager',
                   'is_product_manager',
                   ]
@@ -99,6 +101,41 @@ class ItemSerializer(serializers.ModelSerializer):
                   'review_count',
                   'campaign',
                   'seller']
+
+class ItemPriceFilterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ['id',
+                  'name',
+                  'brand',
+                  'category',
+                  'price',
+                  'stock',
+                  'image',
+                  'description',
+                  'specs',
+                  'mean_rating',
+                  'review_count',
+                  'campaign',
+                  'seller']
+
+class ItemPriceRangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ['id',
+                  'name',
+                  'brand',
+                  'category',
+                  'price',
+                  'stock',
+                  'image',
+                  'description',
+                  'specs',
+                  'mean_rating',
+                  'review_count',
+                  'campaign',
+                  'seller']
+
 
 
 class OrderSerializer(serializers.ModelSerializer):

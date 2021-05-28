@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework import generics
 from rest_framework import filters
+from django_filters import FilterSet, NumberFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 import nltk
@@ -44,7 +45,8 @@ def initialize_chain_connection():
     return w3
 
 w3 = initialize_chain_connection()
-contract_abi_directory = '/static/blockchain/contract_abi.json'
+# contract_abi_directory = '/static/blockchain/contract_abi.json'
+contract_abi_directory = 'D:/Agile/development/static/blockchain/contract_abi.json'
 
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
@@ -179,18 +181,13 @@ class updateUserMgrChange(APIView):
     @staticmethod
     def get_user(pk):
         try:
-            print("trying")
             return User.objects.get(pk=pk)
         except User.DoesNotExist:
             raise Http404
 
     def get(self, request, pk):
-        print("in get")
         selected_user = self.get_user(pk)
-        # username = request.data.get("username")
-        # selected_user = self.get_user(username)
-        print(selected_user)
-        UserSelectSerializer = UserSalesMgrSerializer(selected_user)
+        UserSelectSerializer = UserPrivilegeSerializer(selected_user)
         return Response(UserSelectSerializer.data)
 
     def put(self, request, pk):
@@ -274,14 +271,67 @@ class ItemsByCategory(APIView):
         return Response(serializer.data)
 
 
+class ItemsByRating(APIView):
+    """
+    Retrieve an item by rating.
+    """
+
+    @staticmethod
+    def get_object_by_rating(rating, brand,category):
+        try:
+            return Item.objects.filter(mean_rating=rating)
+        except Item.DoesNotExist:
+            raise Http404
+
+    def get(self, request, rating,  format=None):
+        # brand= self.kwargs.get('Brand')
+        # category = self.kwargs.get('Category')
+        item = self.get_object_by_rating(rating, brand, category)
+        serializer = ItemSerializer(item, many=True)
+        return Response(serializer.data)
+
+
+# class IsOwnerFilterBackend(filters.BaseFilterBackend):
+#     """
+#     Filter that only allows users to see their own objects.
+#     """
+#     def filter_queryset(self, request, queryset, minPrice, maxPrice):
+#         return queryset.filter(price__range=(minPrice, maxPrice))
+
+
+# class ItemsByPrice(APIView): # IMPORTANT COMMENTED CODE - Cannot Remove 
+#     """
+#     Retrieve an item by price.
+#     """
+
+#     @staticmethod
+#     def get_object_by_price(price1, price2):
+#         try:
+#             minPrice = price1
+#             maxPrice = price2
+#             return Item.objects.filter(price__range=(minPrice, maxPrice))
+#         except Item.DoesNotExist:
+#             raise Http404
+
+#     def get(self, request, price, format=None):
+#         price = price1
+#         price_max
+#         # item = self.get_object_by_price(price1,price2)
+#         IsOwnerFilterBackend.filter_queryset(request, queryset, minPrice, maxPrice)
+#         serializer = ItemSerializer(item, many=True)
+#         return Response(serializer.data)
+
+
 class ItemSearch(generics.ListAPIView):
+
     ordering_fields = ['name', 'price', 'mean_rating']
-    filterset_fields = ['category', 'brand', 'mean_rating']
+    filterset_fields = ['category', 'brand', 'mean_rating', 'price']
     search_fields = ['name', 'brand', 'description', 'specs']
     filter_backends = [filters.SearchFilter,
-                       filters.OrderingFilter, DjangoFilterBackend]
+                       filters.OrderingFilter, DjangoFilterBackend ]
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
+
 
 
 class CategoryList(APIView):
@@ -390,7 +440,7 @@ class OrderList(APIView):
         for i, item in enumerate(items):
             result += str(item) + " X " + str(counts[i]) + "\n"
 
-        result += "\nTotal Price: " + str(total_price) + "₺\n"
+        result += "\nTotal Price: " + str(total_price) + "OzuToken\n"
         result += "\nDelivery Adress: " + str(delivery_address) + "\n"
 
         return result
@@ -500,7 +550,7 @@ class OrderDetail(APIView):
 
         for i, item in enumerate(items):
             result += str(item) + " X " + counts[i] + "\n"
-        result += "\nTotal Price: " + str(order.total_price) + "₺\n"
+        result += "\nTotal Price: " + str(order.total_price) + "OzuToken\n"
         result += "\nDelivery Adress: " + str(order.delivery_address) + "\n"
 
         result += "\nOrder Status: " + \

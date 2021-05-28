@@ -22,8 +22,11 @@ urlpatterns = [
     path('api/brands/<category>/', views.BrandList.as_view()),
     path('api/items/', views.ItemList.as_view()),
     path('api/items/search', views.ItemSearch.as_view()),
+    # path('api/itemsByPrice/<int:price1>/<int:price2>/', views.ItemsByPrice.as_view()), # Important Comment - Don't Remove 
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),
     path('api/items/<category>/', views.ItemsByCategory.as_view()),
+    # path('api/items/<int:rating>/', views.ItemsByRating.as_view()),
+    # path('api/items/', views.ItemsByPrice.as_view()),
     path('api/user/', views.UserDetail.as_view()),
 
     path('api/orders/<int:pk>/', views.OrderDetail.as_view()),
@@ -49,7 +52,7 @@ urlpatterns = [
     path('api/funding/', views.Funding.as_view()),
     path('api/funding/<int:amount>/', views.Funding.as_view()),
     # get all users
-    path('api/getAll/', views.GetAllUsers.as_view()),
+    path('api/getAllUsers/', views.GetAllUsers.as_view()),
     # user status update
     path('api/admin-user-update/<int:pk>/', views.updateUserMgrChange.as_view()),
     #intervals - COMING SOON  
@@ -62,6 +65,8 @@ urlpatterns = [
     # Campaign
     path('api/campaign/<str:uuid>/', views.CampaignDetail.as_view()),
     path('api/campaign/', views.CampaignList.as_view()),
+    # path('api/test/<rating>', views.ItemsByRating.as_view()),
+    # path('api/test/<category>/', views.ItemsByRating.as_view()),
 
 ]
 
