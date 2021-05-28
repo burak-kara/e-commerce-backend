@@ -31,7 +31,7 @@ def transferBNB(target_acc):
         to=target_acc,
         gasPrice=w3.eth.gasPrice,
         gas=100000,
-        value=w3.toWei(0.00005, 'ether'),
+        value=w3.toWei(0.005, 'ether'),
         data='',
     ),
         private_key_master, )
