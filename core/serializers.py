@@ -57,7 +57,8 @@ class UserSerializer(serializers.ModelSerializer):
 class UserSelectSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username',  
+        fields = ['pk',
+                  'username',  
                   'is_sales_manager',
                   'is_product_manager',
                   ]
@@ -65,7 +66,8 @@ class UserSelectSerializer(serializers.ModelSerializer):
 class UserPrivilegeSerializer(serializers.ModelSerializer):
   class Meta:
     model = User
-    fields = ['username', 
+    fields = ['pk',
+              'username', 
               'is_sales_manager',
               'is_product_manager',
               ]

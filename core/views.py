@@ -44,7 +44,7 @@ def initialize_chain_connection():
     return w3
 
 w3 = initialize_chain_connection()
-contract_abi_directory = '/static/blockchain/contract_abi.json'
+contract_abi_directory = '/code/static/blockchain/contract_abi.json'
 
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
