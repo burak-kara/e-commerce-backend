@@ -39,35 +39,40 @@ public_key_master = '0xB78DFDdF8af06485b5358ad98950119F6f270AE4'
 
 contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
 
+
 def initialize_chain_connection():
-    w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/")) # "1-s2 provider has the most uptime" - Emir
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0) # might cause errors lul 
+    w3 = Web3(Web3.HTTPProvider(
+        "https://data-seed-prebsc-2-s1.binance.org:8545/"))  # "1-s2 provider has the most uptime" - Emir
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
     return w3
 
+
 w3 = initialize_chain_connection()
-# contract_abi_directory = '/static/blockchain/contract_abi.json'
-contract_abi_directory = 'D:/Agile/development/static/blockchain/contract_abi.json'
+contract_abi_directory = './static/blockchain/contract_abi.json'
 
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
-contract = w3.eth.contract(address =contract_address , abi =temp_abi)
+contract = w3.eth.contract(address=contract_address, abi=temp_abi)
+
 
 def pay(recipient_address, amount, payee_address=public_key_master):
     private_key_master = '95b3eb7b43f5352ad277b7260438ed8f13ab14deaa9c5eee77352cea1a4ce0d6'
     w3 = initialize_chain_connection()
-    txn = contract.functions.transfer(recipient_address, amount).buildTransaction({'from':payee_address,
-      'nonce':w3.eth.getTransactionCount(payee_address) })
-    signed_txn = w3.eth.account.sign_transaction(txn, private_key = private_key_master)
+    txn = contract.functions.transfer(recipient_address, amount).buildTransaction({'from': payee_address,
+                                                                                   'nonce': w3.eth.getTransactionCount(
+                                                                                       payee_address)})
+    signed_txn = w3.eth.account.sign_transaction(txn, private_key=private_key_master)
     txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
-    txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash'] 
+    txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
     return txn_id.hex()
 
 
 nltk.download('vader_lexicon')
 
+
 def initialize_chain_connection():
-    w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/")) # 1-s2 provider has the most uptime
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0) # might cause errors lul
+    w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/"))  # 1-s2 provider has the most uptime
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
     return w3
 
 
@@ -86,16 +91,16 @@ class UserDetail(APIView):
 
 
 class Funding(APIView):
-    def get (self,request, format=None):
+    def get(self, request, format=None):
         pk = request.user.pk
-        user_obj=User.objects.get(pk=pk)
+        user_obj = User.objects.get(pk=pk)
         queried_balance = self.update_balance(user_obj)
-        updated_data = {'balance':queried_balance,
-            'username':user_obj.username,
-            'first_name':user_obj.first_name, 
-            'last_name':user_obj.last_name,
-            'wallet_address':user_obj.wallet_address,
-            'private_wallet_address':user_obj.private_wallet_address}
+        updated_data = {'balance': queried_balance,
+                        'username': user_obj.username,
+                        'first_name': user_obj.first_name,
+                        'last_name': user_obj.last_name,
+                        'wallet_address': user_obj.wallet_address,
+                        'private_wallet_address': user_obj.private_wallet_address}
         serializer = WalletSerializer(user_obj, data=updated_data)
         if serializer.is_valid():
             return Response(serializer.data)
@@ -107,17 +112,17 @@ class Funding(APIView):
         total_supply = contract.functions.balanceOf(public_key_master).call()
         if amt <= total_supply:
             user_email = request.user.email
-            user_obj=User.objects.get(email=user_email)
+            user_obj = User.objects.get(email=user_email)
             wallet_address = user_obj.wallet_address
             amount = amt
-            transaction_id=self.transfer_tokens(amount,wallet_address)
+            transaction_id = self.transfer_tokens(amount, wallet_address)
             new_balance = self.update_balance(user_obj)
-            updated_data = {'balance':new_balance,
-            'username':user_obj.username,
-            'first_name':user_obj.first_name, 
-            'last_name':user_obj.last_name,
-            'wallet_address':user_obj.wallet_address,
-            'private_wallet_address':user_obj.private_wallet_address}
+            updated_data = {'balance': new_balance,
+                            'username': user_obj.username,
+                            'first_name': user_obj.first_name,
+                            'last_name': user_obj.last_name,
+                            'wallet_address': user_obj.wallet_address,
+                            'private_wallet_address': user_obj.private_wallet_address}
             serializer = WalletSerializer(user_obj, data=updated_data)
             if serializer.is_valid():
                 serializer.save()
@@ -129,15 +134,16 @@ class Funding(APIView):
     @staticmethod
     def pay(recipient_address, amount, payee_address=public_key_master):
         w3 = initialize_chain_connection()
-        txn = contract.functions.transfer(recipient, amount).buildTransaction({'from':payee_address,
-          'nonce':w3.eth.getTransactionCount(payee_address) })
-        signed_txn = w3.eth.account.sign_transaction(txn, private_key = private_key_master)
+        txn = contract.functions.transfer(recipient, amount).buildTransaction({'from': payee_address,
+                                                                               'nonce': w3.eth.getTransactionCount(
+                                                                                   payee_address)})
+        signed_txn = w3.eth.account.sign_transaction(txn, private_key=private_key_master)
         txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
         txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
         return txn_id.hex()
 
     @staticmethod
-    def transfer_tokens(amount,recipient_address):
+    def transfer_tokens(amount, recipient_address):
         try:
             amount = amount
             transactionID = pay(recipient_address, amount)
@@ -173,8 +179,9 @@ class GetAllUsers(APIView):
 
     def get(self, request, format=None):
         filered_user_objects = User.objects.all().filter(is_admin=False).filter(is_superuser=False)
-        allUsersSerializer = UserSelectSerializer(filered_user_objects,many=True)
+        allUsersSerializer = UserSelectSerializer(filered_user_objects, many=True)
         return Response(allUsersSerializer.data)
+
 
 class updateUserMgrChange(APIView):
 
@@ -194,9 +201,9 @@ class updateUserMgrChange(APIView):
         is_sales_mgr = request.data.get("is_sales_manager")
         is_product_mgr = request.data.get("is_product_manager")
         selected_user = self.get_user(pk)
-        modified_privilege = {'username':selected_user.username,
-        'is_sales_manager': is_sales_mgr,
-        'is_product_manager':is_product_mgr}
+        modified_privilege = {'username': selected_user.username,
+                              'is_sales_manager': is_sales_mgr,
+                              'is_product_manager': is_product_mgr}
         serializer = UserPrivilegeSerializer(selected_user, data=modified_privilege)
         if serializer.is_valid():
             serializer.save()
@@ -382,7 +389,6 @@ class OrderList(APIView):
     List all orders, or create a new one.
     """
 
-
     @staticmethod
     def calculate_total_price(items, item_counts):
         try:
@@ -464,21 +470,19 @@ class OrderList(APIView):
             data={'buyer': buyer, 'items': items, 'item_counts': self.to_comma_sep_values(item_counts),
                   'total_price': total_price, 'delivery_address': request.data['delivery_address']})
 
-
-
         # if user can pay only then allow the order to be confirmed (1)
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
         if buyer_balance >= float(total_price):
-            transaction_id = self.customer_pay(total_price,user_obj)
+            transaction_id = self.customer_pay(total_price, user_obj)
             new_balance = self.check_customer_balance(buyer_wallet)
-            updated_data = {'balance':new_balance,
-            'username':user_obj.username,
-            'first_name':user_obj.first_name, 
-            'last_name':user_obj.last_name,
-            'wallet_address':user_obj.wallet_address,
-            'private_wallet_address':user_obj.private_wallet_address}
+            updated_data = {'balance': new_balance,
+                            'username': user_obj.username,
+                            'first_name': user_obj.first_name,
+                            'last_name': user_obj.last_name,
+                            'wallet_address': user_obj.wallet_address,
+                            'private_wallet_address': user_obj.private_wallet_address}
             buyer_wallet_serializer = WalletSerializer(user_obj, data=updated_data)
             if serializer.is_valid() & buyer_wallet_serializer.is_valid():
                 buyer_wallet_serializer.save()
@@ -494,7 +498,7 @@ class OrderList(APIView):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
-    def check_customer_balance (wallet_address):
+    def check_customer_balance(wallet_address):
         user_wallet_address = wallet_address
         balance = int(contract.functions.balanceOf(user_wallet_address).call())
         return balance
@@ -505,9 +509,10 @@ class OrderList(APIView):
         recipient = recipient_address
         payee_address = payee.wallet_address
         payee_private_key = payee.private_wallet_address
-        txn = contract.functions.transfer(recipient, amount).buildTransaction({'from':payee_address,
-          'nonce':w3.eth.getTransactionCount(payee_address) })
-        signed_txn = w3.eth.account.sign_transaction(txn, private_key = payee_private_key)
+        txn = contract.functions.transfer(recipient, amount).buildTransaction({'from': payee_address,
+                                                                               'nonce': w3.eth.getTransactionCount(
+                                                                                   payee_address)})
+        signed_txn = w3.eth.account.sign_transaction(txn, private_key=payee_private_key)
         txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
         txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
         return txn_id.hex()
@@ -521,8 +526,6 @@ class OrderList(APIView):
             return new_balance
         except User.DoesNotExist:
             raise HTTP_400_BAD_REQUEST
-
-
 
 
 class OrderDetail(APIView):
@@ -1119,7 +1122,7 @@ class RecommendedAdds(APIView):
         user_id = request.user.pk
 
         if len(Order.objects.filter(buyer=user_id)) <= 0:
-            return Response({})
+            return Response({'img': random.sample(list(Advertisement.objects.all()), 1)[0].image})
 
         previous_purchase_categories = self.get_previous_purchase_categories(
             user_id)
