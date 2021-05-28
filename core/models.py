@@ -12,20 +12,33 @@ public_key_master = '0xB78DFDdF8af06485b5358ad98950119F6f270AE4'
 
 contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
 
+
 def initialize_chain_connection():
-    w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/")) # "1-s2 provider has the most uptime" - Emir
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0) # might cause errors lul 
+    w3 = Web3(Web3.HTTPProvider(
+        "https://data-seed-prebsc-2-s1.binance.org:8545/"))  # "1-s2 provider has the most uptime" - Emir
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
     return w3
 
+
+def create_wallet(self):
+    w3 = self.initialize_chain_connection()
+    created_wallet_address = w3.eth.account.create()
+    print("function wallet address", created_wallet_address.address)
+    print("function private address", created_wallet_address.privateKey)
+    return created_wallet_address.address, created_wallet_address.privateKey.hex()
+
+
 w3 = initialize_chain_connection()
-contract_abi_directory = '/code/static/blockchain/contract_abi.json'
+contract_abi_directory = './static/blockchain/contract_abi.json'
 f = open(contract_abi_directory)
 temp_abi = json.load(f)
-contract = w3.eth.contract(address =contract_address , abi =temp_abi)
+contract = w3.eth.contract(address=contract_address, abi=temp_abi)
+
 
 class CustomUserManager(BaseUserManager):
 
-    def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,password=None):
+    def create_user(self, username, email, phone_number, first_name, last_name, is_sales_manager, is_product_manager,
+                    wallet_address, private_wallet_address, password=None):
         user = self.model(
             username=username,
             email=self.normalize_email(email),
@@ -34,7 +47,9 @@ class CustomUserManager(BaseUserManager):
             last_name=last_name,
             is_sales_manager=is_sales_manager,
             is_product_manager=is_product_manager,
-            )
+            wallet_address=wallet_address,
+            private_wallet_address=private_wallet_address
+        )
         user.set_password(password)
         user.save(using=self._db)
         return user
@@ -78,7 +93,6 @@ class User(AbstractBaseUser):
     balance = models.DecimalField(max_digits=11, decimal_places=5, default=0.0)
     wallet_address = models.CharField(max_length=200)
     private_wallet_address = models.CharField(max_length=200)
-
 
     USERNAME_FIELD = 'username'
 
