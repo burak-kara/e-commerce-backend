@@ -25,6 +25,21 @@ def create_wallet():
     return created_wallet_address.address, created_wallet_address.privateKey.hex()
 
 
+def transferBNB(target_acc):
+    signed_txn = w3.eth.account.signTransaction(dict(
+        nonce=w3.eth.getTransactionCount(public_key_master),
+        to=target_acc,
+        gasPrice=w3.eth.gasPrice,
+        gas=100000,
+        value=w3.toWei(0.00005, 'ether'),
+        data='',
+    ),
+        private_key_master, )
+    txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
+    txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
+    return txn_id
+
+
 w3 = initialize_chain_connection()
 contract_abi_directory = './static/blockchain/contract_abi.json'
 f = open(contract_abi_directory)
@@ -49,6 +64,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     public_key, private_key = create_wallet()
     wallet_address = public_key
     private_wallet_address = private_key
+    transferBNB(wallet_address)
 
     def save(self, request):
         user = User(
