@@ -104,6 +104,7 @@ class UserSerializer(serializers.ModelSerializer):
                   'twoFA_enabled',
                   'balance',
                   ]
+        read_only_fields  = ['wallet_address', ]
 
 
 class UserSelectSerializer(serializers.ModelSerializer):
