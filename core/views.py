@@ -291,8 +291,6 @@ class ItemsByRating(APIView):
             raise Http404
 
     def get(self, request, rating,  format=None):
-        # brand= self.kwargs.get('Brand')
-        # category = self.kwargs.get('Category')
         item = self.get_object_by_rating(rating, brand, category)
         serializer = ItemSerializer(item, many=True)
         return Response(serializer.data)
@@ -470,31 +468,34 @@ class OrderList(APIView):
             data={'buyer': buyer, 'items': items, 'item_counts': self.to_comma_sep_values(item_counts),
                   'total_price': total_price, 'delivery_address': request.data['delivery_address']})
 
-        total_price = 10000000000000000000000000000000000000000000
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
         if buyer_balance >= float(total_price):
-            transaction_id = self.customer_pay(total_price, user_obj)
-            new_balance = self.check_customer_balance(buyer_wallet)
-            updated_data = {'balance': new_balance,
-                            'username': user_obj.username,
-                            'first_name': user_obj.first_name,
-                            'last_name': user_obj.last_name,
-                            'wallet_address': user_obj.wallet_address,
-                            'private_wallet_address': user_obj.private_wallet_address}
-            buyer_wallet_serializer = WalletSerializer(user_obj, data=updated_data)
-            if serializer.is_valid() & buyer_wallet_serializer.is_valid():
-                buyer_wallet_serializer.save()
-                serializer.save()
-                mail_body = self.email_body(
-                    items, item_counts, total_price, request.data['delivery_address'])
-                send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
-                          mail_body,
-                          recipient_list=[request.user.email],
-                          from_email="info.ozu.store@gmail.com")
+            try:
+                transaction_id = self.customer_pay(total_price, user_obj)
+                new_balance = self.check_customer_balance(buyer_wallet)
+                updated_data = {'balance': new_balance,
+                                'username': user_obj.username,
+                                'first_name': user_obj.first_name,
+                                'last_name': user_obj.last_name,
+                                'wallet_address': user_obj.wallet_address,
+                                'private_wallet_address': user_obj.private_wallet_address}
+                buyer_wallet_serializer = WalletSerializer(user_obj, data=updated_data)
+                if serializer.is_valid() & buyer_wallet_serializer.is_valid():
+                    buyer_wallet_serializer.save()
+                    serializer.save()
+                    mail_body = self.email_body(
+                        items, item_counts, total_price, request.data['delivery_address'])
+                    send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
+                              mail_body,
+                              recipient_list=[request.user.email],
+                              from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except:
+                payment_error_dict = {'Error': "Something went wrong while making the payment"}
+                payment_error_json = json.dumps(payment_error_dict) 
+                return Response(payment_error_json, status=status.HTTP_400_BAD_REQUEST)
         error_dict = { 'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
         error_json = json.dumps(error_dict)
         return Response(error_json,status=status.HTTP_400_BAD_REQUEST)
@@ -527,7 +528,7 @@ class OrderList(APIView):
             recipient.balance = new_balance
             return new_balance
         except User.DoesNotExist:
-            raise HTTP_400_BAD_REQUEST
+            raise status.HTTP_400_BAD_REQUEST
 
 
 class OrderDetail(APIView):

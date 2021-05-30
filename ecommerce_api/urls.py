@@ -22,11 +22,8 @@ urlpatterns = [
     path('api/brands/<category>/', views.BrandList.as_view()),
     path('api/items/', views.ItemList.as_view()),
     path('api/items/search', views.ItemSearch.as_view()),
-    # path('api/itemsByPrice/<int:price1>/<int:price2>/', views.ItemsByPrice.as_view()), # Important Comment - Don't Remove 
     path('api/items/<int:pk>/', views.ItemDetail.as_view()),
     path('api/items/<category>/', views.ItemsByCategory.as_view()),
-    # path('api/items/<int:rating>/', views.ItemsByRating.as_view()),
-    # path('api/items/', views.ItemsByPrice.as_view()),
     path('api/user/', views.UserDetail.as_view()),
 
     path('api/orders/<int:pk>/', views.OrderDetail.as_view()),
@@ -50,7 +47,7 @@ urlpatterns = [
             views.TOTPVerifyView.as_view(), name='totp-login'),
     #funding URL
     path('api/funding/', views.Funding.as_view()),
-    path('api/funding/<int:amount>/', views.Funding.as_view()),
+    # path('api/funding/<int:amount>/', views.Funding.as_view()),
     # get all users
     path('api/getAllUsers/', views.GetAllUsers.as_view()),
     # user status update
