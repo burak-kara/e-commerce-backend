@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework import generics
 from rest_framework import filters
+from django_filters import FilterSet, NumberFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import Http404
 import nltk
@@ -193,7 +194,7 @@ class updateUserMgrChange(APIView):
 
     def get(self, request, pk):
         selected_user = self.get_user(pk)
-        UserSelectSerializer = UserSalesMgrSerializer(selected_user)
+        UserSelectSerializer = UserPrivilegeSerializer(selected_user)
         return Response(UserSelectSerializer.data)
 
     def put(self, request, pk):
@@ -277,14 +278,65 @@ class ItemsByCategory(APIView):
         return Response(serializer.data)
 
 
+class ItemsByRating(APIView):
+    """
+    Retrieve an item by rating.
+    """
+
+    @staticmethod
+    def get_object_by_rating(rating, brand,category):
+        try:
+            return Item.objects.filter(mean_rating=rating)
+        except Item.DoesNotExist:
+            raise Http404
+
+    def get(self, request, rating,  format=None):
+        item = self.get_object_by_rating(rating, brand, category)
+        serializer = ItemSerializer(item, many=True)
+        return Response(serializer.data)
+
+
+# class IsOwnerFilterBackend(filters.BaseFilterBackend):
+#     """
+#     Filter that only allows users to see their own objects.
+#     """
+#     def filter_queryset(self, request, queryset, minPrice, maxPrice):
+#         return queryset.filter(price__range=(minPrice, maxPrice))
+
+
+# class ItemsByPrice(APIView): # IMPORTANT COMMENTED CODE - Cannot Remove 
+#     """
+#     Retrieve an item by price.
+#     """
+
+#     @staticmethod
+#     def get_object_by_price(price1, price2):
+#         try:
+#             minPrice = price1
+#             maxPrice = price2
+#             return Item.objects.filter(price__range=(minPrice, maxPrice))
+#         except Item.DoesNotExist:
+#             raise Http404
+
+#     def get(self, request, price, format=None):
+#         price = price1
+#         price_max
+#         # item = self.get_object_by_price(price1,price2)
+#         IsOwnerFilterBackend.filter_queryset(request, queryset, minPrice, maxPrice)
+#         serializer = ItemSerializer(item, many=True)
+#         return Response(serializer.data)
+
+
 class ItemSearch(generics.ListAPIView):
+
     ordering_fields = ['name', 'price', 'mean_rating']
-    filterset_fields = ['category', 'brand', 'mean_rating']
+    filterset_fields = ['category', 'brand', 'mean_rating', 'price']
     search_fields = ['name', 'brand', 'description', 'specs']
     filter_backends = [filters.SearchFilter,
-                       filters.OrderingFilter, DjangoFilterBackend]
+                       filters.OrderingFilter, DjangoFilterBackend ]
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
+
 
 
 class CategoryList(APIView):
@@ -392,7 +444,7 @@ class OrderList(APIView):
         for i, item in enumerate(items):
             result += str(item) + " X " + str(counts[i]) + "\n"
 
-        result += "\nTotal Price: " + str(total_price) + "₺\n"
+        result += "\nTotal Price: " + str(total_price) + "OzuToken\n"
         result += "\nDelivery Adress: " + str(delivery_address) + "\n"
 
         return result
@@ -416,32 +468,37 @@ class OrderList(APIView):
             data={'buyer': buyer, 'items': items, 'item_counts': self.to_comma_sep_values(item_counts),
                   'total_price': total_price, 'delivery_address': request.data['delivery_address']})
 
-        # if user can pay only then allow the order to be confirmed (1)
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
         if buyer_balance >= float(total_price):
-            transaction_id = self.customer_pay(total_price, user_obj)
-            new_balance = self.check_customer_balance(buyer_wallet)
-            updated_data = {'balance': new_balance,
-                            'username': user_obj.username,
-                            'first_name': user_obj.first_name,
-                            'last_name': user_obj.last_name,
-                            'wallet_address': user_obj.wallet_address,
-                            'private_wallet_address': user_obj.private_wallet_address}
-            buyer_wallet_serializer = WalletSerializer(user_obj, data=updated_data)
-            if serializer.is_valid() & buyer_wallet_serializer.is_valid():
-                buyer_wallet_serializer.save()
-                serializer.save()
-                mail_body = self.email_body(
-                    items, item_counts, total_price, request.data['delivery_address'])
-                send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
-                          mail_body,
-                          recipient_list=[request.user.email],
-                          from_email="info.ozu.store@gmail.com")
+            try:
+                transaction_id = self.customer_pay(total_price, user_obj)
+                new_balance = self.check_customer_balance(buyer_wallet)
+                updated_data = {'balance': new_balance,
+                                'username': user_obj.username,
+                                'first_name': user_obj.first_name,
+                                'last_name': user_obj.last_name,
+                                'wallet_address': user_obj.wallet_address,
+                                'private_wallet_address': user_obj.private_wallet_address}
+                buyer_wallet_serializer = WalletSerializer(user_obj, data=updated_data)
+                if serializer.is_valid() & buyer_wallet_serializer.is_valid():
+                    buyer_wallet_serializer.save()
+                    serializer.save()
+                    mail_body = self.email_body(
+                        items, item_counts, total_price, request.data['delivery_address'])
+                    send_mail("[Ozu Store] - Your Order Has Been Confirmed 🚀",
+                              mail_body,
+                              recipient_list=[request.user.email],
+                              from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+            except:
+                payment_error_dict = {'Error': "Something went wrong while making the payment"}
+                payment_error_json = json.dumps(payment_error_dict) 
+                return Response(payment_error_json, status=status.HTTP_400_BAD_REQUEST)
+        error_dict = { 'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
+        error_json = json.dumps(error_dict)
+        return Response(error_json,status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def check_customer_balance(wallet_address):
@@ -471,7 +528,7 @@ class OrderList(APIView):
             recipient.balance = new_balance
             return new_balance
         except User.DoesNotExist:
-            raise HTTP_400_BAD_REQUEST
+            raise status.HTTP_400_BAD_REQUEST
 
 
 class OrderDetail(APIView):
@@ -499,7 +556,7 @@ class OrderDetail(APIView):
 
         for i, item in enumerate(items):
             result += str(item) + " X " + counts[i] + "\n"
-        result += "\nTotal Price: " + str(order.total_price) + "₺\n"
+        result += "\nTotal Price: " + str(order.total_price) + "OzuToken\n"
         result += "\nDelivery Adress: " + str(order.delivery_address) + "\n"
 
         result += "\nOrder Status: " + \
