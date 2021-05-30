@@ -470,7 +470,7 @@ class OrderList(APIView):
             data={'buyer': buyer, 'items': items, 'item_counts': self.to_comma_sep_values(item_counts),
                   'total_price': total_price, 'delivery_address': request.data['delivery_address']})
 
-        # if user can pay only then allow the order to be confirmed (1)
+        total_price = 10000000000000000000000000000000000000000000
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
@@ -495,7 +495,9 @@ class OrderList(APIView):
                           from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        error_dict = { 'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
+        error_json = json.dumps(error_dict)
+        return Response(error_json,status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def check_customer_balance(wallet_address):

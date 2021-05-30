@@ -103,7 +103,6 @@ class UserSerializer(serializers.ModelSerializer):
                   'is_admin',
                   'twoFA_enabled',
                   'balance',
-                  'wallet_address',
                   ]
 
 
