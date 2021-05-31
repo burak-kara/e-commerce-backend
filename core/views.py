@@ -760,7 +760,7 @@ class RetrieveRatingFromComment(APIView):
     def post(self, request, format=None):
         comment = request.data['comment']
 
-        translated_comment = ts.translate_html(comment, translator=ts.google)
+        translated_comment = ts.translate_html(comment, translator=ts.alibaba)
 
         sentiment_analysis = self.nltk_sentiment(
             _sentence=translated_comment)
