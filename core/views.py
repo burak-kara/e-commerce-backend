@@ -494,8 +494,7 @@ class OrderList(APIView):
                 payment_error_json = json.dumps(payment_error_dict)
                 return Response(payment_error_json, status=status.HTTP_400_BAD_REQUEST)
         error_dict = {'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
-        error_json = json.dumps(error_dict)
-        return Response(error_json, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST, data=error_dict)
 
     @staticmethod
     def check_customer_balance(wallet_address):
