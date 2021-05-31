@@ -403,42 +403,53 @@ class OrderList(APIView):
     List all orders, or create a new one.
     """
 
+    # @staticmethod
+    # def calculate_total_price(items, item_counts):
+    #     try:
+    #         total_price = 0
+    #         for i, pk in enumerate(items):
+    #
+    #             item = Item.objects.get(pk=pk)
+    #             campaigns = item.campaign.all()
+    #
+    #             for campaign in campaigns:
+    #                 # Buy X get Y free
+    #                 if int(campaign.campaign_amount) == 0:
+    #                     if item_counts[i] % int(campaign.campaign_x) == 0:
+    #                         total_price += int(item.price) * item_counts[i]
+    #                         total_price *= 1 - \
+    #                                        ((int(campaign.campaign_x) - int(campaign.campaign_y)
+    #                                          ) / int(campaign.campaign_x))
+    #                     else:
+    #                         total_price += int(item.price) * item_counts[i]
+    #                 # Buy X and get M percent off of Y amount
+    #                 elif campaign.campaign_y != 0:
+    #                     if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+    #                         total_price += int(item.price) * \
+    #                                        int(campaign.campaign_x)
+    #                         total_price += (int(item.price) * int(campaign.campaign_y)
+    #                                         ) * (1 - (int(campaign.campaign_y) / 100))
+    #
+    #                     else:
+    #                         total_price += int(item.price) * item_counts[i]
+    #                 # Percentage Discount
+    #                 else:
+    #                     total_price += int(item.price) * item_counts[i]
+    #                     total_price *= ((100 -
+    #                                      int(campaign.campaign_amount)) / 100)
+    #
+    #         return round(total_price, 2)
+    #     except Item.DoesNotExist:
+    #         raise Http404
+
     @staticmethod
     def calculate_total_price(items, item_counts):
         try:
             total_price = 0
             for i, pk in enumerate(items):
-
                 item = Item.objects.get(pk=pk)
-                campaigns = item.campaign.all()
-
-                for campaign in campaigns:
-                    # Buy X get Y free
-                    if int(campaign.campaign_amount) == 0:
-                        if item_counts[i] % int(campaign.campaign_x) == 0:
-                            total_price += int(item.price) * item_counts[i]
-                            total_price *= 1 - \
-                                           ((int(campaign.campaign_x) - int(campaign.campaign_y)
-                                             ) / int(campaign.campaign_x))
-                        else:
-                            total_price += int(item.price) * item_counts[i]
-                    # Buy X and get M percent off of Y amount
-                    elif campaign.campaign_y != 0:
-                        if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
-                            total_price += int(item.price) * \
-                                           int(campaign.campaign_x)
-                            total_price += (int(item.price) * int(campaign.campaign_y)
-                                            ) * (1 - (int(campaign.campaign_y) / 100))
-
-                        else:
-                            total_price += int(item.price) * item_counts[i]
-                    # Percentage Discount
-                    else:
-                        total_price += int(item.price) * item_counts[i]
-                        total_price *= ((100 -
-                                         int(campaign.campaign_amount)) / 100)
-
-            return round(total_price, 2)
+                total_price += int(item.price) * item_counts[i]
+            return total_price
         except Item.DoesNotExist:
             raise Http404
 
