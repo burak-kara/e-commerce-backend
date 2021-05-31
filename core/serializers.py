@@ -103,8 +103,8 @@ class UserSerializer(serializers.ModelSerializer):
                   'is_admin',
                   'twoFA_enabled',
                   'balance',
-                  'wallet_address',
                   ]
+        read_only_fields  = ['wallet_address', ]
 
 
 class UserSelectSerializer(serializers.ModelSerializer):
@@ -112,6 +112,8 @@ class UserSelectSerializer(serializers.ModelSerializer):
         model = User
         fields = ['pk',
                   'username',
+                  'first_name',
+                  'last_name',  
                   'is_sales_manager',
                   'is_product_manager',
                   ]
@@ -154,6 +156,41 @@ class ItemSerializer(serializers.ModelSerializer):
                   'review_count',
                   'campaign',
                   'seller']
+
+class ItemPriceFilterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ['id',
+                  'name',
+                  'brand',
+                  'category',
+                  'price',
+                  'stock',
+                  'image',
+                  'description',
+                  'specs',
+                  'mean_rating',
+                  'review_count',
+                  'campaign',
+                  'seller']
+
+class ItemPriceRangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = ['id',
+                  'name',
+                  'brand',
+                  'category',
+                  'price',
+                  'stock',
+                  'image',
+                  'description',
+                  'specs',
+                  'mean_rating',
+                  'review_count',
+                  'campaign',
+                  'seller']
+
 
 
 class OrderSerializer(serializers.ModelSerializer):

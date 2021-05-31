@@ -47,7 +47,7 @@ urlpatterns = [
             views.TOTPVerifyView.as_view(), name='totp-login'),
     #funding URL
     path('api/funding/', views.Funding.as_view()),
-    path('api/funding/<int:amount>/', views.Funding.as_view()),
+    # path('api/funding/<int:amount>/', views.Funding.as_view()),
     # get all users
     path('api/getAllUsers/', views.GetAllUsers.as_view()),
     # user status update
@@ -62,6 +62,8 @@ urlpatterns = [
     # Campaign
     path('api/campaign/<str:uuid>/', views.CampaignDetail.as_view()),
     path('api/campaign/', views.CampaignList.as_view()),
+    # path('api/test/<rating>', views.ItemsByRating.as_view()),
+    # path('api/test/<category>/', views.ItemsByRating.as_view()),
 
 ]
 
