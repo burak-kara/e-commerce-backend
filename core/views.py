@@ -31,6 +31,7 @@ from datetime import date
 from web3 import Web3, HTTPProvider
 from web3.middleware import geth_poa_middleware
 import json
+import re
 # Campaigns
 from rest_framework.exceptions import ValidationError
 
@@ -758,24 +759,34 @@ class RetrieveRatingFromComment(APIView):
         return (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
 
     def post(self, request, format=None):
+        is_successfully_translated = True
+
         comment = request.data['comment']
 
-        translated_comment = ts.translate_html(comment, translator=ts.alibaba)
+        try:
+            translated_comment = ts.translate_html(comment, translator=ts.alibaba)
+            translated_comment = re.sub('<[^>]+>', '', translated_comment)
 
-        sentiment_analysis = self.nltk_sentiment(
-            _sentence=translated_comment)
+        except:
+            is_successfully_translated = False
+            translated_comment = comment
 
-        sentiment_score = sentiment_analysis['compound']
-        normalized_sentiment_score = self.normalize(
-            sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
-        retrieved_rating = round(normalized_sentiment_score)
+        try:
+            sentiment_analysis = self.nltk_sentiment(_sentence=translated_comment)
 
-        data = {'sentiment_score': sentiment_score,
-                'raw_rating': normalized_sentiment_score,
-                'retrieved_rating': retrieved_rating,
-                'translated_comment': translated_comment}
+            sentiment_score = sentiment_analysis['compound']
+            normalized_sentiment_score = self.normalize(sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
+            retrieved_rating = round(normalized_sentiment_score)
 
-        return Response(data)
+            data = {'sentiment_score': sentiment_score,
+                    'raw_rating': normalized_sentiment_score,
+                    'retrieved_rating': retrieved_rating,
+                    'translated_comment': translated_comment,
+                    'is_successfully_translated': is_successfully_translated}
+
+            return Response(data)
+        except Exception as e:
+            return Response(status=status.HTTP_503_SERVICE_UNAVAILABLE, data={'exception': str(e)})
 
 
 # 2-factor Authentication
