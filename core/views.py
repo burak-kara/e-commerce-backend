@@ -297,36 +297,6 @@ class ItemsByRating(APIView):
         return Response(serializer.data)
 
 
-# class IsOwnerFilterBackend(filters.BaseFilterBackend):
-#     """
-#     Filter that only allows users to see their own objects.
-#     """
-#     def filter_queryset(self, request, queryset, minPrice, maxPrice):
-#         return queryset.filter(price__range=(minPrice, maxPrice))
-
-
-# class ItemsByPrice(APIView): # IMPORTANT COMMENTED CODE - Cannot Remove 
-#     """
-#     Retrieve an item by price.
-#     """
-
-#     @staticmethod
-#     def get_object_by_price(price1, price2):
-#         try:
-#             minPrice = price1
-#             maxPrice = price2
-#             return Item.objects.filter(price__range=(minPrice, maxPrice))
-#         except Item.DoesNotExist:
-#             raise Http404
-
-#     def get(self, request, price, format=None):
-#         price = price1
-#         price_max
-#         # item = self.get_object_by_price(price1,price2)
-#         IsOwnerFilterBackend.filter_queryset(request, queryset, minPrice, maxPrice)
-#         serializer = ItemSerializer(item, many=True)
-#         return Response(serializer.data)
-
 class RangeFilterBackend(filters.BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):

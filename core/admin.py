@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Item, Review, User, Category, Campaign
+from .models import Item, Review, User, Category, Campaign, Order
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
@@ -22,6 +22,7 @@ admin.site.register(Item)
 admin.site.register(Category)
 admin.site.register(Review)
 admin.site.register(Campaign)
+admin.site.register(Order)
 
 admin.site.unregister(Group)
 admin.site.unregister(Site)
