@@ -758,28 +758,25 @@ class RetrieveRatingFromComment(APIView):
         return (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
 
     def post(self, request, format=None):
-        try:
-            comment = request.data['comment']
+        comment = request.data['comment']
 
-            translated_comment = ts.translate_html(comment, translator=ts.google, to_language='en',
-                                                   translator_params={})
+        translated_comment = ts.translate_html(comment, translator=ts.google, to_language='en',
+                                               translator_params={})
 
-            sentiment_analysis = self.nltk_sentiment(
-                _sentence=translated_comment)
+        sentiment_analysis = self.nltk_sentiment(
+            _sentence=translated_comment)
 
-            sentiment_score = sentiment_analysis['compound']
-            normalized_sentiment_score = self.normalize(
-                sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
-            retrieved_rating = round(normalized_sentiment_score)
+        sentiment_score = sentiment_analysis['compound']
+        normalized_sentiment_score = self.normalize(
+            sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
+        retrieved_rating = round(normalized_sentiment_score)
 
-            data = {'sentiment_score': sentiment_score,
-                    'raw_rating': normalized_sentiment_score,
-                    'retrieved_rating': retrieved_rating,
-                    'translated_comment': translated_comment}
+        data = {'sentiment_score': sentiment_score,
+                'raw_rating': normalized_sentiment_score,
+                'retrieved_rating': retrieved_rating,
+                'translated_comment': translated_comment}
 
-            return Response(data)
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(data)
 
 
 # 2-factor Authentication
