@@ -284,13 +284,13 @@ class ItemsByRating(APIView):
     """
 
     @staticmethod
-    def get_object_by_rating(rating, brand,category):
+    def get_object_by_rating(rating, brand, category):
         try:
             return Item.objects.filter(mean_rating=rating)
         except Item.DoesNotExist:
             raise Http404
 
-    def get(self, request, rating,  format=None):
+    def get(self, request, rating, format=None):
         item = self.get_object_by_rating(rating, brand, category)
         serializer = ItemSerializer(item, many=True)
         return Response(serializer.data)
@@ -326,17 +326,32 @@ class ItemsByRating(APIView):
 #         serializer = ItemSerializer(item, many=True)
 #         return Response(serializer.data)
 
+class RangeFilterBackend(filters.BaseFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        price_lt = int(request.GET.get('price_lt', '-1'))
+        price_gt = int(request.GET.get('price_gt', '-1'))
+        rating_lt = int(request.GET.get('rating_lt', '-1'))
+        rating_gt = int(request.GET.get('rating_gt', '-1'))
+        if price_lt != -1:
+            queryset = queryset.filter(price__lte=price_lt)
+        if price_gt != -1:
+            queryset = queryset.filter(price__gte=price_gt)
+        if rating_lt != -1:
+            queryset = queryset.filter(mean_rating__lte=rating_lt)
+        if rating_gt != -1:
+            queryset = queryset.filter(mean_rating__gte=rating_gt)
+        return queryset
+
 
 class ItemSearch(generics.ListAPIView):
-
     ordering_fields = ['name', 'price', 'mean_rating']
     filterset_fields = ['category', 'brand', 'mean_rating', 'price']
     search_fields = ['name', 'brand', 'description', 'specs']
     filter_backends = [filters.SearchFilter,
-                       filters.OrderingFilter, DjangoFilterBackend ]
+                       filters.OrderingFilter, RangeFilterBackend, DjangoFilterBackend]
     queryset = Item.objects.all()
     serializer_class = ItemSerializer
-
 
 
 class CategoryList(APIView):
@@ -494,11 +509,11 @@ class OrderList(APIView):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             except:
                 payment_error_dict = {'Error': "Something went wrong while making the payment"}
-                payment_error_json = json.dumps(payment_error_dict) 
+                payment_error_json = json.dumps(payment_error_dict)
                 return Response(payment_error_json, status=status.HTTP_400_BAD_REQUEST)
-        error_dict = { 'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
+        error_dict = {'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
         error_json = json.dumps(error_dict)
-        return Response(error_json,status=status.HTTP_400_BAD_REQUEST)
+        return Response(error_json, status=status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def check_customer_balance(wallet_address):
