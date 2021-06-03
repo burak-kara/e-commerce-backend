@@ -1087,7 +1087,7 @@ class CampaignList(APIView):
             return name, description
 
         if int(y) != 0:
-            name = "Buy {} Get {} Free at {}% off".format(
+            name = "Buy {} Get {} of the same item at {}% off".format(
                 str(x), str(y), str(amount))
             description = "Add {} items to your basket. You will only pay full price for {} and you will get {}% discount for the remaining {} items".format(
                 str(int(x) + int(y)), str(x), str(amount), str(y))
