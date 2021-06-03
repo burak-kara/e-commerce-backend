@@ -1231,6 +1231,7 @@ class TotalPriceList(APIView):
         try:
             total_price = 0
             is_campaign_applied = False
+            campaign_applied_items = []
 
             for i, pk in enumerate(items):
 
@@ -1248,8 +1249,9 @@ class TotalPriceList(APIView):
                                                    item_counts[i],
                                                    item.price)
                 is_campaign_applied = True
+                campaign_applied_items.append(pk)
 
-            return round(total_price, 2), is_campaign_applied
+            return round(total_price, 2), is_campaign_applied, campaign_applied_items
         except Item.DoesNotExist:
             raise Http404
 
@@ -1267,10 +1269,11 @@ class TotalPriceList(APIView):
         items = [int(i) for i in request.data['items'].keys()]
 
         item_counts = [int(i) for i in request.data['items'].values()]
-        total_price, is_campaign_applied = self.calculate_total_price(
+        total_price, is_campaign_applied, campaign_applied_items = self.calculate_total_price(
             items, item_counts)
         data = {
             'total_price': total_price,
-            'is_campaign_applied': is_campaign_applied
+            'is_campaign_applied': is_campaign_applied,
+            'campaign_applied_items': campaign_applied_items
         }
         return Response(data)
