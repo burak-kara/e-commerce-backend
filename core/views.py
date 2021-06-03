@@ -633,7 +633,9 @@ class ReviewList(APIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = ReviewSerializer(data=request.data)
+        data = copy.deepcopy(request.data)
+        data['user'] = request.user.pk
+        serializer = ReviewSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
