@@ -117,7 +117,7 @@ class User(AbstractBaseUser):
 class Campaign(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200, default='')
-    valid_until = models.DateTimeField()
+    valid_until = models.DateTimeField(auto_now=True)
     campaign_x = models.IntegerField(default=1)
     campaign_y = models.IntegerField(default=0)
     campaign_amount = models.IntegerField(default=0)
