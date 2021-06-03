@@ -382,54 +382,57 @@ class OrderList(APIView):
     """
     List all orders, or create a new one.
     """
-
-    # @staticmethod
-    # def calculate_total_price(items, item_counts):
-    #     try:
-    #         total_price = 0
-    #         for i, pk in enumerate(items):
-    #
-    #             item = Item.objects.get(pk=pk)
-    #             campaigns = item.campaign.all()
-    #
-    #             for campaign in campaigns:
-    #                 # Buy X get Y free
-    #                 if int(campaign.campaign_amount) == 0:
-    #                     if item_counts[i] % int(campaign.campaign_x) == 0:
-    #                         total_price += int(item.price) * item_counts[i]
-    #                         total_price *= 1 - \
-    #                                        ((int(campaign.campaign_x) - int(campaign.campaign_y)
-    #                                          ) / int(campaign.campaign_x))
-    #                     else:
-    #                         total_price += int(item.price) * item_counts[i]
-    #                 # Buy X and get M percent off of Y amount
-    #                 elif campaign.campaign_y != 0:
-    #                     if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
-    #                         total_price += int(item.price) * \
-    #                                        int(campaign.campaign_x)
-    #                         total_price += (int(item.price) * int(campaign.campaign_y)
-    #                                         ) * (1 - (int(campaign.campaign_y) / 100))
-    #
-    #                     else:
-    #                         total_price += int(item.price) * item_counts[i]
-    #                 # Percentage Discount
-    #                 else:
-    #                     total_price += int(item.price) * item_counts[i]
-    #                     total_price *= ((100 -
-    #                                      int(campaign.campaign_amount)) / 100)
-    #
-    #         return round(total_price, 2)
-    #     except Item.DoesNotExist:
-    #         raise Http404
-
     @staticmethod
-    def calculate_total_price(items, item_counts):
+    def apply_campaign(campaigns, count, full_price):
+        result = 0
+        for campaign in campaigns:
+            # Buy X get Y free
+            if int(campaign.campaign_amount) == 0:
+                if count % int(campaign.campaign_x) == 0:
+                    result += int(full_price) * count
+                    result *= 1 - \
+                        ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                          ) / int(campaign.campaign_x))
+                else:
+                    result += int(full_price) * count
+            # Buy X and get M percent off of Y amount
+            elif campaign.campaign_y != 0:
+                if count % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+                    result += int(full_price) * \
+                        int(campaign.campaign_x)
+                    result += (int(full_price) * int(campaign.campaign_y)
+                               ) * (1 - (int(campaign.campaign_y) / 100))
+                else:
+                    result += int(full_price) * count
+            # Percentage Discount
+            else:
+                result += int(full_price) * count
+                result *= ((100 -
+                            int(campaign.campaign_amount)) / 100)
+
+        return result
+
+    def calculate_total_price(self, items, item_counts):
         try:
             total_price = 0
+
             for i, pk in enumerate(items):
+
                 item = Item.objects.get(pk=pk)
-                total_price += int(item.price) * item_counts[i]
-            return total_price
+                campaigns = item.campaign.all()
+
+            if len(campaigns) == 0:
+                total_price = 0
+                for i, pk in enumerate(items):
+                    item = Item.objects.get(pk=pk)
+                    total_price += int(item.price) * item_counts[i]
+
+            else:
+                total_price += self.apply_campaign(campaigns,
+                                                   item_counts[i],
+                                                   item.price)
+
+            return round(total_price, 2)
         except Item.DoesNotExist:
             raise Http404
 
@@ -478,9 +481,12 @@ class OrderList(APIView):
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
+        print(buyer_balance, total_price)
         if buyer_balance >= float(total_price):
             try:
-                transaction_id = self.customer_pay(total_price, user_obj)
+                transaction_id = self.customer_pay(
+                    int(total_price), user_obj)
+
                 new_balance = self.check_customer_balance(buyer_wallet)
                 updated_data = {'balance': new_balance,
                                 'username': user_obj.username,
@@ -500,7 +506,8 @@ class OrderList(APIView):
                               recipient_list=[request.user.email],
                               from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            except:
+            except Exception as e:
+                print(e)
                 payment_error_dict = {
                     'Error': "Something went wrong while making the payment"}
                 payment_error_json = json.dumps(payment_error_dict)
@@ -1071,6 +1078,25 @@ class CampaignDetail(APIView):
 
 
 class CampaignList(APIView):
+    @staticmethod
+    def name_description(x, y, amount):
+        if int(amount) == 0:
+            name = "Buy {} Get {} Free".format(str(x), str(y))
+            description = "Add {} items to your basket. You will only pay for {} and you will get {} for free".format(
+                str(int(x) + int(y)), str(x), str(y))
+            return name, description
+
+        if int(y) != 0:
+            name = "Buy {} Get {} Free at {}% off".format(
+                str(x), str(y), str(amount))
+            description = "Add {} items to your basket. You will only pay full price for {} and you will get {}% discount for the remaining {} items".format(
+                str(int(x) + int(y)), str(x), str(amount), str(y))
+            return name, description
+        else:
+            name = "{}% Discount".format(str(amount))
+            description = "{}% Discount at the checkout".format(str(amount))
+            return name, description
+
     def get(self, request, format=None):
         if request.user.is_sales_manager or request.user.is_product_manager:
             item = Campaign.objects.all()
@@ -1081,7 +1107,16 @@ class CampaignList(APIView):
 
     def post(self, request, format=None):
         if request.user.is_sales_manager:
-            serializer = CampaignSerializer(data=request.data)
+            data = dict(request.data)
+            for key in data:
+                data[key] = data[key][0]
+            name, description = self.name_description(
+                data['campaign_x'], data['campaign_y'], data['campaign_amount'])
+
+            data['name'] = name
+            data['description'] = description
+
+            serializer = CampaignSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
