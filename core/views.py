@@ -1086,7 +1086,7 @@ class CampaignList(APIView):
             return name, description
 
     def get(self, request, format=None):
-        if request.user.is_sales_manager:
+        if request.user.is_sales_manager or request.user.is_product_manager:
             item = Campaign.objects.all()
             serializer = CampaignSerializer(item, many=True)
             return Response(serializer.data)
