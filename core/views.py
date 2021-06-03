@@ -44,7 +44,8 @@ contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
 def initialize_chain_connection():
     w3 = Web3(Web3.HTTPProvider(
         "https://data-seed-prebsc-2-s1.binance.org:8545/"))  # "1-s2 provider has the most uptime" - Emir
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
+    # might cause errors lul
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     return w3
 
 
@@ -62,7 +63,8 @@ def pay(recipient_address, amount, payee_address=public_key_master):
     txn = contract.functions.transfer(recipient_address, amount).buildTransaction({'from': payee_address,
                                                                                    'nonce': w3.eth.getTransactionCount(
                                                                                        payee_address)})
-    signed_txn = w3.eth.account.sign_transaction(txn, private_key=private_key_master)
+    signed_txn = w3.eth.account.sign_transaction(
+        txn, private_key=private_key_master)
     txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
     txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
     return txn_id.hex()
@@ -72,8 +74,11 @@ nltk.download('vader_lexicon')
 
 
 def initialize_chain_connection():
-    w3 = Web3(Web3.HTTPProvider("https://data-seed-prebsc-2-s1.binance.org:8545/"))  # 1-s2 provider has the most uptime
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
+    # 1-s2 provider has the most uptime
+    w3 = Web3(Web3.HTTPProvider(
+        "https://data-seed-prebsc-2-s1.binance.org:8545/"))
+    # might cause errors lul
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     return w3
 
 
@@ -138,7 +143,8 @@ class Funding(APIView):
         txn = contract.functions.transfer(recipient, amount).buildTransaction({'from': payee_address,
                                                                                'nonce': w3.eth.getTransactionCount(
                                                                                    payee_address)})
-        signed_txn = w3.eth.account.sign_transaction(txn, private_key=private_key_master)
+        signed_txn = w3.eth.account.sign_transaction(
+            txn, private_key=private_key_master)
         txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
         txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
         return txn_id.hex()
@@ -156,7 +162,8 @@ class Funding(APIView):
     def update_balance(userObj):
         try:
             recipient = userObj
-            new_balance = contract.functions.balanceOf(recipient.wallet_address).call()
+            new_balance = contract.functions.balanceOf(
+                recipient.wallet_address).call()
             recipient.balance = new_balance
             return new_balance
         except User.DoesNotExist:
@@ -179,8 +186,10 @@ class AddressDetail(APIView):
 class GetAllUsers(APIView):
 
     def get(self, request, format=None):
-        filered_user_objects = User.objects.all().filter(is_admin=False).filter(is_superuser=False)
-        allUsersSerializer = UserSelectSerializer(filered_user_objects, many=True)
+        filered_user_objects = User.objects.all().filter(
+            is_admin=False).filter(is_superuser=False)
+        allUsersSerializer = UserSelectSerializer(
+            filered_user_objects, many=True)
         return Response(allUsersSerializer.data)
 
 
@@ -205,7 +214,8 @@ class updateUserMgrChange(APIView):
         modified_privilege = {'username': selected_user.username,
                               'is_sales_manager': is_sales_mgr,
                               'is_product_manager': is_product_mgr}
-        serializer = UserPrivilegeSerializer(selected_user, data=modified_privilege)
+        serializer = UserPrivilegeSerializer(
+            selected_user, data=modified_privilege)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -478,7 +488,8 @@ class OrderList(APIView):
                                 'last_name': user_obj.last_name,
                                 'wallet_address': user_obj.wallet_address,
                                 'private_wallet_address': user_obj.private_wallet_address}
-                buyer_wallet_serializer = WalletSerializer(user_obj, data=updated_data)
+                buyer_wallet_serializer = WalletSerializer(
+                    user_obj, data=updated_data)
                 if serializer.is_valid() & buyer_wallet_serializer.is_valid():
                     buyer_wallet_serializer.save()
                     serializer.save()
@@ -490,10 +501,12 @@ class OrderList(APIView):
                               from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             except:
-                payment_error_dict = {'Error': "Something went wrong while making the payment"}
+                payment_error_dict = {
+                    'Error': "Something went wrong while making the payment"}
                 payment_error_json = json.dumps(payment_error_dict)
                 return Response(payment_error_json, status=status.HTTP_400_BAD_REQUEST)
-        error_dict = {'total_price': total_price, 'wallet_balance': self.check_customer_balance(buyer_wallet)}
+        error_dict = {'total_price': total_price,
+                      'wallet_balance': self.check_customer_balance(buyer_wallet)}
         return Response(status=status.HTTP_400_BAD_REQUEST, data=error_dict)
 
     @staticmethod
@@ -511,7 +524,8 @@ class OrderList(APIView):
         txn = contract.functions.transfer(recipient, amount).buildTransaction({'from': payee_address,
                                                                                'nonce': w3.eth.getTransactionCount(
                                                                                    payee_address)})
-        signed_txn = w3.eth.account.sign_transaction(txn, private_key=payee_private_key)
+        signed_txn = w3.eth.account.sign_transaction(
+            txn, private_key=payee_private_key)
         txn_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
         txn_id = w3.eth.waitForTransactionReceipt(txn_hash)['transactionHash']
         return txn_id.hex()
@@ -520,7 +534,8 @@ class OrderList(APIView):
     def update_balance(pk):
         try:
             recipient = User.objects.get(pk=userName)
-            new_balance = contract.functions.balanceOf(recipient.wallet_address).call()
+            new_balance = contract.functions.balanceOf(
+                recipient.wallet_address).call()
             recipient.balance = new_balance
             return new_balance
         except User.DoesNotExist:
@@ -744,7 +759,8 @@ class RetrieveRatingFromComment(APIView):
         comment = request.data['comment']
 
         try:
-            translated_comment = ts.translate_html(comment, translator=ts.alibaba)
+            translated_comment = ts.translate_html(
+                comment, translator=ts.alibaba)
             translated_comment = re.sub('<[^>]+>', '', translated_comment)
 
         except:
@@ -752,10 +768,12 @@ class RetrieveRatingFromComment(APIView):
             translated_comment = comment
 
         try:
-            sentiment_analysis = self.nltk_sentiment(_sentence=translated_comment)
+            sentiment_analysis = self.nltk_sentiment(
+                _sentence=translated_comment)
 
             sentiment_score = sentiment_analysis['compound']
-            normalized_sentiment_score = self.normalize(sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
+            normalized_sentiment_score = self.normalize(
+                sentiment_score, old_min_max=(-1, 1), new_min_max=(1, 5))
             retrieved_rating = round(normalized_sentiment_score)
 
             data = {'sentiment_score': sentiment_score,
@@ -906,7 +924,7 @@ class StatisticDetail(APIView):
                 # Add how much it has been ordered in current order
                 else:
                     item_count_day[item[0]
-                    ] += int(in_data['item_counts'][i].split(",")[j])
+                                   ] += int(in_data['item_counts'][i].split(",")[j])
                 # Sort the distionary by value
                 item_count_day = {k: v for k, v in sorted(
                     item_count_day.items(), key=lambda item: item[1], reverse=True)}
@@ -1054,7 +1072,7 @@ class CampaignDetail(APIView):
 
 class CampaignList(APIView):
     def get(self, request, format=None):
-        if request.user.is_sales_manager:
+        if request.user.is_sales_manager or request.user.is_product_manager:
             item = Campaign.objects.all()
             serializer = CampaignSerializer(item, many=True)
             return Response(serializer.data)
@@ -1132,7 +1150,8 @@ class RecommendedAdds(APIView):
         previous_purchase_categories = self.get_previous_purchase_categories(
             user_id)
 
-        advertisement = self.get_random_recommended_advertisement(previous_purchase_categories)
+        advertisement = self.get_random_recommended_advertisement(
+            previous_purchase_categories)
 
         data = {'img': advertisement.image}
 
