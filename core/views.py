@@ -382,9 +382,37 @@ class OrderList(APIView):
     """
     List all orders, or create a new one.
     """
-
     @staticmethod
-    def calculate_total_price(items, item_counts):
+    def apply_campaign(campaigns, count, full_price):
+        result = 0
+        for campaign in campaigns:
+            # Buy X get Y free
+            if int(campaign.campaign_amount) == 0:
+                if count % int(campaign.campaign_x) == 0:
+                    result += int(full_price) * count
+                    result *= 1 - \
+                        ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                          ) / int(campaign.campaign_x))
+                else:
+                    result += int(full_price) * count
+            # Buy X and get M percent off of Y amount
+            elif campaign.campaign_y != 0:
+                if count % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+                    result += int(full_price) * \
+                        int(campaign.campaign_x)
+                    result += (int(full_price) * int(campaign.campaign_y)
+                               ) * (1 - (int(campaign.campaign_y) / 100))
+                else:
+                    result += int(full_price) * count
+            # Percentage Discount
+            else:
+                result += int(full_price) * count
+                result *= ((100 -
+                            int(campaign.campaign_amount)) / 100)
+
+        return result
+
+    def calculate_total_price(self, items, item_counts):
         try:
             total_price = 0
 
@@ -398,31 +426,11 @@ class OrderList(APIView):
                 for i, pk in enumerate(items):
                     item = Item.objects.get(pk=pk)
                     total_price += int(item.price) * item_counts[i]
+
             else:
-                for campaign in campaigns:
-                    # Buy X get Y free
-                    if int(campaign.campaign_amount) == 0:
-                        if item_counts[i] % int(campaign.campaign_x) == 0:
-                            total_price += int(item.price) * item_counts[i]
-                            total_price *= 1 - \
-                                ((int(campaign.campaign_x) - int(campaign.campaign_y)
-                                  ) / int(campaign.campaign_x))
-                        else:
-                            total_price += int(item.price) * item_counts[i]
-                    # Buy X and get M percent off of Y amount
-                    elif campaign.campaign_y != 0:
-                        if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
-                            total_price += int(item.price) * \
-                                int(campaign.campaign_x)
-                            total_price += (int(item.price) * int(campaign.campaign_y)
-                                            ) * (1 - (int(campaign.campaign_y) / 100))
-                        else:
-                            total_price += int(item.price) * item_counts[i]
-                    # Percentage Discount
-                    else:
-                        total_price += int(item.price) * item_counts[i]
-                        total_price *= ((100 -
-                                         int(campaign.campaign_amount)) / 100)
+                total_price += self.apply_campaign(campaigns,
+                                                   item_counts[i],
+                                                   item.price)
 
             return round(total_price, 2)
         except Item.DoesNotExist:
@@ -473,9 +481,12 @@ class OrderList(APIView):
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
+        print(buyer_balance, total_price)
         if buyer_balance >= float(total_price):
             try:
-                transaction_id = self.customer_pay(total_price, user_obj)
+                transaction_id = self.customer_pay(
+                    int(total_price), user_obj)
+
                 new_balance = self.check_customer_balance(buyer_wallet)
                 updated_data = {'balance': new_balance,
                                 'username': user_obj.username,
@@ -495,7 +506,8 @@ class OrderList(APIView):
                               recipient_list=[request.user.email],
                               from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            except:
+            except Exception as e:
+                print(e)
                 payment_error_dict = {
                     'Error': "Something went wrong while making the payment"}
                 payment_error_json = json.dumps(payment_error_dict)
