@@ -398,31 +398,31 @@ class OrderList(APIView):
                 for i, pk in enumerate(items):
                     item = Item.objects.get(pk=pk)
                     total_price += int(item.price) * item_counts[i]
-                return total_price
-            for campaign in campaigns:
-                # Buy X get Y free
-                if int(campaign.campaign_amount) == 0:
-                    if item_counts[i] % int(campaign.campaign_x) == 0:
-                        total_price += int(item.price) * item_counts[i]
-                        total_price *= 1 - \
-                            ((int(campaign.campaign_x) - int(campaign.campaign_y)
-                              ) / int(campaign.campaign_x))
+            else:
+                for campaign in campaigns:
+                    # Buy X get Y free
+                    if int(campaign.campaign_amount) == 0:
+                        if item_counts[i] % int(campaign.campaign_x) == 0:
+                            total_price += int(item.price) * item_counts[i]
+                            total_price *= 1 - \
+                                ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                                  ) / int(campaign.campaign_x))
+                        else:
+                            total_price += int(item.price) * item_counts[i]
+                    # Buy X and get M percent off of Y amount
+                    elif campaign.campaign_y != 0:
+                        if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+                            total_price += int(item.price) * \
+                                int(campaign.campaign_x)
+                            total_price += (int(item.price) * int(campaign.campaign_y)
+                                            ) * (1 - (int(campaign.campaign_y) / 100))
+                        else:
+                            total_price += int(item.price) * item_counts[i]
+                    # Percentage Discount
                     else:
                         total_price += int(item.price) * item_counts[i]
-                # Buy X and get M percent off of Y amount
-                elif campaign.campaign_y != 0:
-                    if item_counts[i] % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
-                        total_price += int(item.price) * \
-                            int(campaign.campaign_x)
-                        total_price += (int(item.price) * int(campaign.campaign_y)
-                                        ) * (1 - (int(campaign.campaign_y) / 100))
-                    else:
-                        total_price += int(item.price) * item_counts[i]
-                # Percentage Discount
-                else:
-                    total_price += int(item.price) * item_counts[i]
-                    total_price *= ((100 -
-                                     int(campaign.campaign_amount)) / 100)
+                        total_price *= ((100 -
+                                         int(campaign.campaign_amount)) / 100)
 
             return round(total_price, 2)
         except Item.DoesNotExist:
