@@ -16,7 +16,8 @@ contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
 def initialize_chain_connection():
     w3 = Web3(Web3.HTTPProvider(
         "https://data-seed-prebsc-2-s1.binance.org:8545/"))  # "1-s2 provider has the most uptime" - Emir
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
+    # might cause errors lul
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     return w3
 
 
@@ -115,10 +116,12 @@ class User(AbstractBaseUser):
 
 class Campaign(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200, default='')
     valid_until = models.DateTimeField()
     campaign_x = models.IntegerField(default=1)
     campaign_y = models.IntegerField(default=0)
     campaign_amount = models.IntegerField(default=0)
+    description = models.CharField(max_length=1000, blank=True, default='')
 
     def __str__(self):
         return "campaign_buy_" + str(self.campaign_x) + "_get_" + str(self.campaign_y) + "_" + str(self.campaign_amount)

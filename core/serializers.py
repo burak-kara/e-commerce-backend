@@ -15,7 +15,8 @@ contract_address = '0x1781684a1A5eff097C631E227d654a3470842e45'
 def initialize_chain_connection():
     w3 = Web3(Web3.HTTPProvider(
         "https://data-seed-prebsc-2-s1.binance.org:8545/"))  # "1-s2 provider has the most uptime" - Emir
-    w3.middleware_onion.inject(geth_poa_middleware, layer=0)  # might cause errors lul
+    # might cause errors lul
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     return w3
 
 
@@ -104,7 +105,7 @@ class UserSerializer(serializers.ModelSerializer):
                   'twoFA_enabled',
                   'balance',
                   ]
-        read_only_fields  = ['wallet_address', ]
+        read_only_fields = ['wallet_address', ]
 
 
 class UserSelectSerializer(serializers.ModelSerializer):
@@ -113,7 +114,7 @@ class UserSelectSerializer(serializers.ModelSerializer):
         fields = ['pk',
                   'username',
                   'first_name',
-                  'last_name',  
+                  'last_name',
                   'is_sales_manager',
                   'is_product_manager',
                   ]
@@ -157,6 +158,7 @@ class ItemSerializer(serializers.ModelSerializer):
                   'campaign',
                   'seller']
 
+
 class ItemPriceFilterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
@@ -174,6 +176,7 @@ class ItemPriceFilterSerializer(serializers.ModelSerializer):
                   'campaign',
                   'seller']
 
+
 class ItemPriceRangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
@@ -190,7 +193,6 @@ class ItemPriceRangeSerializer(serializers.ModelSerializer):
                   'review_count',
                   'campaign',
                   'seller']
-
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -232,6 +234,8 @@ class CampaignSerializer(serializers.ModelSerializer):
     class Meta:
         model = Campaign
         fields = ['id',
+                  'name',
+                  'description',
                   'valid_until',
                   'campaign_x',
                   'campaign_y',
