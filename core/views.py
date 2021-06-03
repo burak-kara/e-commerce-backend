@@ -481,7 +481,7 @@ class OrderList(APIView):
         user_obj = User.objects.get(pk=buyer)
         buyer_wallet = user_obj.wallet_address
         buyer_balance = float(self.check_customer_balance(buyer_wallet))
-        print(buyer_balance, total_price)
+
         if buyer_balance >= float(total_price):
             try:
                 transaction_id = self.customer_pay(
@@ -507,7 +507,6 @@ class OrderList(APIView):
                               from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             except Exception as e:
-                print(e)
                 payment_error_dict = {
                     'Error': "Something went wrong while making the payment"}
                 payment_error_json = json.dumps(payment_error_dict)
@@ -968,19 +967,23 @@ class StatisticDetail(APIView):
 
         for key in result.keys():
             data = result[key]
-            refactored_result["last_5_total_revenue"]["days"].append(key)
-            refactored_result["total_sold_product_counts_5_days"]["days"].append(
-                key)
-            refactored_result["last_5_total_revenue"]["revenue"]["data"].append(
-                data[1])
-            refactored_result["total_sold_product_counts_5_days"]["revenue"]["data"].append(
-                sum(list(data[0].values())))
 
-            for item in data[0].keys():
-                if item not in all_sales.keys():
-                    all_sales[item] = int(data[0][item])
-                else:
-                    all_sales[item] += int(data[0][item])
+            if len(data) != 0:
+                refactored_result["last_5_total_revenue"]["days"].append(key)
+                refactored_result["total_sold_product_counts_5_days"]["days"].append(
+                    key)
+                refactored_result["last_5_total_revenue"]["revenue"]["data"].append(
+                    data[1])
+                refactored_result["total_sold_product_counts_5_days"]["revenue"]["data"].append(
+                    sum(list(data[0].values())))
+
+                for item in data[0].keys():
+                    if item not in all_sales.keys():
+                        all_sales[item] = int(data[0][item])
+                    else:
+                        all_sales[item] += int(data[0][item])
+            else:
+                pass
 
         all_sales = {k: v for k, v in sorted(
             all_sales.items(), key=lambda item: item[1], reverse=True)}
@@ -1087,7 +1090,7 @@ class CampaignList(APIView):
             return name, description
 
         if int(y) != 0:
-            name = "Buy {} Get {} Free at {}% off".format(
+            name = "Buy {} Get {} of the same item at {}% off".format(
                 str(x), str(y), str(amount))
             description = "Add {} items to your basket. You will only pay full price for {} and you will get {}% discount for the remaining {} items".format(
                 str(int(x) + int(y)), str(x), str(amount), str(y))
@@ -1190,4 +1193,90 @@ class RecommendedAdds(APIView):
 
         data = {'img': advertisement.image}
 
+        return Response(data)
+
+
+class TotalPriceList(APIView):
+    """
+    List total price
+    """
+    @staticmethod
+    def apply_campaign(campaigns, count, full_price):
+        result = 0
+        for campaign in campaigns:
+            # Buy X get Y free
+            if int(campaign.campaign_amount) == 0:
+                if count % int(campaign.campaign_x) == 0:
+                    result += int(full_price) * count
+                    result *= 1 - \
+                        ((int(campaign.campaign_x) - int(campaign.campaign_y)
+                          ) / int(campaign.campaign_x))
+                else:
+                    result += int(full_price) * count
+            # Buy X and get M percent off of Y amount
+            elif campaign.campaign_y != 0:
+                if count % (int(campaign.campaign_x) + int(campaign.campaign_y)) == 0:
+                    result += int(full_price) * \
+                        int(campaign.campaign_x)
+                    result += (int(full_price) * int(campaign.campaign_y)
+                               ) * (1 - (int(campaign.campaign_y) / 100))
+                else:
+                    result += int(full_price) * count
+            # Percentage Discount
+            else:
+                result += int(full_price) * count
+                result *= ((100 -
+                            int(campaign.campaign_amount)) / 100)
+
+        return result
+
+    def calculate_total_price(self, items, item_counts):
+        try:
+            total_price = 0
+            is_campaign_applied = False
+            campaign_applied_items = []
+
+            for i, pk in enumerate(items):
+
+                item = Item.objects.get(pk=pk)
+                campaigns = item.campaign.all()
+
+            if len(campaigns) == 0:
+                total_price = 0
+                for i, pk in enumerate(items):
+                    item = Item.objects.get(pk=pk)
+                    total_price += int(item.price) * item_counts[i]
+
+            else:
+                total_price += self.apply_campaign(campaigns,
+                                                   item_counts[i],
+                                                   item.price)
+                is_campaign_applied = True
+                campaign_applied_items.append(pk)
+
+            return round(total_price, 2), is_campaign_applied, campaign_applied_items
+        except Item.DoesNotExist:
+            raise Http404
+
+    @staticmethod
+    def to_comma_sep_values(item_counts):
+        return ",".join([str(i) for i in item_counts])
+
+    def get_item_by_id(self, pk):
+        try:
+            return Item.objects.get(pk=pk)
+        except Item.DoesNotExist:
+            raise Http404
+
+    def get(self, request, format=None):
+        items = [int(i) for i in request.data['items'].keys()]
+
+        item_counts = [int(i) for i in request.data['items'].values()]
+        total_price, is_campaign_applied, campaign_applied_items = self.calculate_total_price(
+            items, item_counts)
+        data = {
+            'total_price': total_price,
+            'is_campaign_applied': is_campaign_applied,
+            'campaign_applied_items': campaign_applied_items
+        }
         return Response(data)

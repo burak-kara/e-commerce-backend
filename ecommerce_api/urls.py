@@ -45,17 +45,18 @@ urlpatterns = [
     re_path(r'^totp/create/$', views.TOTPCreateView.as_view(), name='totp-create'),
     re_path(r'^totp/login/(?P<token>[0-9]{6})/$',
             views.TOTPVerifyView.as_view(), name='totp-login'),
-    #funding URL
+    # funding URL
     path('api/funding/', views.Funding.as_view()),
     # path('api/funding/<int:amount>/', views.Funding.as_view()),
     # get all users
     path('api/getAllUsers/', views.GetAllUsers.as_view()),
     # user status update
-    path('api/admin-user-update/<int:pk>/', views.updateUserMgrChange.as_view()),
-    #intervals - COMING SOON  
+    path('api/admin-user-update/<int:pk>/',
+         views.updateUserMgrChange.as_view()),
+    # intervals - COMING SOON
+    # Total price
+    path('api/getPrice/', views.TotalPriceList.as_view()),
 
-
-    
     # Statistics
     path('api/stats/', views.StatisticDetail.as_view()),
 
