@@ -1268,7 +1268,7 @@ class TotalPriceList(APIView):
         except Item.DoesNotExist:
             raise Http404
 
-    def get(self, request, format=None):
+    def post(self, request, format=None):
         items = [int(i) for i in request.data['items'].keys()]
 
         item_counts = [int(i) for i in request.data['items'].values()]
