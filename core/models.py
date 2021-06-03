@@ -180,7 +180,7 @@ class Order(models.Model):
         (REJECTED, 'Rejected')
     )
     status = models.IntegerField(
-        choices=STATUS_CHOICES, default=WAITING_FOR_PAYMENT)
+        choices=STATUS_CHOICES, default=PAYMENT_CONFIRMED)
 
     def __str__(self):
         return str(self.buyer) + str(self.items)

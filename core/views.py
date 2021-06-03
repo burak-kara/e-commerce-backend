@@ -507,7 +507,6 @@ class OrderList(APIView):
                               from_email="info.ozu.store@gmail.com")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             except Exception as e:
-                print(e)
                 payment_error_dict = {
                     'Error': "Something went wrong while making the payment"}
                 payment_error_json = json.dumps(payment_error_dict)
@@ -968,19 +967,23 @@ class StatisticDetail(APIView):
 
         for key in result.keys():
             data = result[key]
-            refactored_result["last_5_total_revenue"]["days"].append(key)
-            refactored_result["total_sold_product_counts_5_days"]["days"].append(
-                key)
-            refactored_result["last_5_total_revenue"]["revenue"]["data"].append(
-                data[1])
-            refactored_result["total_sold_product_counts_5_days"]["revenue"]["data"].append(
-                sum(list(data[0].values())))
 
-            for item in data[0].keys():
-                if item not in all_sales.keys():
-                    all_sales[item] = int(data[0][item])
-                else:
-                    all_sales[item] += int(data[0][item])
+            if len(data) != 0:
+                refactored_result["last_5_total_revenue"]["days"].append(key)
+                refactored_result["total_sold_product_counts_5_days"]["days"].append(
+                    key)
+                refactored_result["last_5_total_revenue"]["revenue"]["data"].append(
+                    data[1])
+                refactored_result["total_sold_product_counts_5_days"]["revenue"]["data"].append(
+                    sum(list(data[0].values())))
+
+                for item in data[0].keys():
+                    if item not in all_sales.keys():
+                        all_sales[item] = int(data[0][item])
+                    else:
+                        all_sales[item] += int(data[0][item])
+            else:
+                pass
 
         all_sales = {k: v for k, v in sorted(
             all_sales.items(), key=lambda item: item[1], reverse=True)}
