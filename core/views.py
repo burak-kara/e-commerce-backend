@@ -1083,12 +1083,9 @@ class CampaignDetail(APIView):
             return Response(status=status.HTTP_401_UNAUTHORIZED)
 
     def get(self, request, uuid, format=None):
-        if request.user.is_sales_manager or request.user.is_product_manager:
-            campaign = self.get_object(uuid)
-            serializer = CampaignSerializer(campaign)
-            return Response(serializer.data)
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        campaign = self.get_object(uuid)
+        serializer = CampaignSerializer(campaign)
+        return Response(serializer.data)
 
 
 class CampaignList(APIView):
