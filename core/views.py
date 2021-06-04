@@ -399,8 +399,8 @@ class OrderList(APIView):
             elif campaign.campaign_y != 0:
                 if count == campaign.campaign_x + campaign.campaign_y:
                     temp = (int(full_price) * campaign.campaign_x)
-                    temp += (int(full_price) * campaign.campaign_x) * \
-                        campaign.campaign_amount/100
+                    temp += (int(full_price) * campaign.campaign_y) * \
+                        (1-campaign.campaign_amount/100)
                 else:
                     temp = (int(full_price) * count)
             # Percentage Discount
@@ -1226,8 +1226,8 @@ class TotalPriceList(APIView):
             elif campaign.campaign_y != 0:
                 if count == campaign.campaign_x + campaign.campaign_y:
                     temp = (int(full_price) * campaign.campaign_x)
-                    temp += (int(full_price) * campaign.campaign_x) * \
-                        campaign.campaign_amount/100
+                    temp += (int(full_price) * campaign.campaign_y) * \
+                        (1-campaign.campaign_amount/100)
                 else:
                     temp = (int(full_price) * count)
             # Percentage Discount
