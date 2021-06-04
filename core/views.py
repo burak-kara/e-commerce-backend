@@ -1119,8 +1119,6 @@ class CampaignList(APIView):
     def post(self, request, format=None):
         if request.user.is_sales_manager:
             data = dict(request.data)
-            for key in data:
-                data[key] = data[key][0]
             name, description = self.name_description(
                 data['campaign_x'], data['campaign_y'], data['campaign_amount'])
 
