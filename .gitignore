@@ -9,7 +9,8 @@ media
 # Backup files # 
 *.bak 
 
-# If you are using PyCharm # 
+# If you are using PyCharm #
+.idea
 .idea/**/workspace.xml 
 .idea/**/tasks.xml 
 .idea/dictionaries 
@@ -79,7 +80,8 @@ celerybeat-schedule.*
 .env 
 .venv 
 env/ 
-venv/ 
+venv/
+v_env/
 ENV/ 
 env.bak/ 
 venv.bak/ 
@@ -114,3 +116,7 @@ GitHub.sublime-settings
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+# MacOS
+.DS_Store
+ads.txt
